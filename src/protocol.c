@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: protocol.c,v 1.6 2001/05/16 02:13:41 ejb Exp $
+ * $Id: protocol.c,v 1.7 2002/03/11 14:51:17 ejb Exp $
  */
 
 #include "clients.h"
@@ -217,7 +217,7 @@ send_out_umode(from, who, target, which, mode)
 					 who->name, target->name, which);
 		  break;
 		case UMODE_INVISIBLE:
-		  sendto_one(acptr, ":%s MODE %s :%cs",
+		  sendto_one(acptr, ":%s MODE %s :%ci",
 					 who->name, target->name, which);
 		  break;
 		case UMODE_OPER:

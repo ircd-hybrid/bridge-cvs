@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_server.c,v 1.7 2001/05/16 02:13:40 ejb Exp $
+ * $Id: m_server.c,v 1.8 2002/03/11 14:51:16 ejb Exp $
  */
 
 #include <stdio.h>
@@ -68,6 +68,12 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		  {
 			exit_client(cptr, NULL, "No N Line");
 			return 0;
+		  }
+
+		if (strcmp(conf->pass, cptr->pass))
+		  {
+		    exit_client(cptr, NULL, "Bad password");
+		    return 0;
 		  }
 
 		Count.servers++;

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.h,v 1.8 2001/05/16 02:13:37 ejb Exp $
+ * $Id: clients.h,v 1.9 2002/03/11 14:51:14 ejb Exp $
  */
 
 #ifndef __CLIENTS_H_INCLUDED
@@ -123,7 +123,7 @@ struct LocalClient
   int status;
   int servertype;
   unsigned long caps;
-  
+  char password[PASSLEN + 1];
   char bufsave[BUFSIZE];
   int bufsavelen;
   
