@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: send.c,v 1.2 2001/02/11 08:00:22 ejb Exp $
+ * $Id: send.c,v 1.3 2001/05/04 23:11:25 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -111,8 +111,7 @@ sendto_one(struct Client *cptr, char *fmt, ...)
 	int len;
 	
 	if (!IsLocal(cptr)) {
-		printf("%% NET:ERR:Tried to send to non-local client %s!\n", cptr->name);
-		return;
+	  cptr = cptr->from;
 	}
 	
 	va_start(ap, fmt);

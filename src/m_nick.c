@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_nick.c,v 1.2 2001/02/11 08:00:20 ejb Exp $
+ * $Id: m_nick.c,v 1.3 2001/05/04 23:11:24 ejb Exp $
  */
 
 
@@ -27,6 +27,20 @@
 #include "handlers.h"
 #include "config.h"
 #include "send.h"
+
+/*
+** TS3:
+** when its a server introducing a new nick
+**      parv[0] = sender prefix
+**      parv[1] = nickname
+**      parv[2] = hop count
+**      parv[3] = TS
+**      parv[4] = umode
+**      parv[5] = username
+**      parv[6] = hostname
+**      parv[7] = server
+**      parv[8] = ircname
+*/
 
 int
 m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
@@ -45,25 +59,25 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	switch (cptr->localClient->servertype) {
 		case PROTOCOL_TS3:
 			/* TS3 nick introduction .. */
-			nick = parv[2];
-			hops = atol(parv[3]);
-			ts = atol(parv[4]);
-			umode = parv[5];
-			username = parv[6];
-			hostname = parv[7];
-			server = parv[8];
-			gecos = parv[9];
+			nick = parv[1];
+			hops = atoi(parv[2]);
+			ts = atol(parv[3]);
+			umode = parv[4];
+			username = parv[5];
+			hostname = parv[6];
+			server = parv[7];
+			gecos = parv[8];
 			break;
 		default:
 			/* huh?? */
 			printf("%% IRC:ERR:Received NICK command from unsupported server type %d\n", cptr->localClient->servertype);
 			return 0;
 	}
-	
-	nick = parv[0];
-	
+
+	/*	
 	printf("new nick: %s\n", nick);
-	
+	*/
+
 	newclient = user_newslot(0);
 	strncpy(newclient->name, nick, NAMELEN);
 	strncpy(newclient->info, gecos, INFOLEN);
@@ -76,7 +90,7 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	newclient->user->umodes = 0;
 
 	node = make_dlink_node();
-	dlinkAdd(cptr, node, &cptr_list);
+	dlinkAdd(newclient, node, &cptr_list);
 	
 	return 0;
 }

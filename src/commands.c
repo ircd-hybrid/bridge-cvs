@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.2 2001/02/11 08:00:20 ejb Exp $
+ * $Id: commands.c,v 1.3 2001/05/04 23:11:24 ejb Exp $
  */
 
 
@@ -44,6 +44,7 @@ struct cmd cmdtab[] = {
 	{"protoctl", MFLG_UNREG, m_protoctl},
 	{"ping", MFLG_UNREG, m_ping},
 	{"nick", 0, m_nick},
+	{"version", 0, m_version},
 	{NULL, 0, NULL},
 };
 

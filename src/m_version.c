@@ -15,17 +15,17 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.3 2001/05/04 23:11:21 ejb Exp $
+ * $Id: m_version.c,v 1.1 2001/05/04 23:11:25 ejb Exp $
  */
 
-#ifndef __HANDLERS_H_INCLUDED
-#define __HANDLERS_H_INCLUDED
+#include "clients.h"
+#include "handlers.h"
+#include "send.h"
+#include "config.h"
 
-int m_pass(struct Client *, struct Client *, int, char **);
-int m_server(struct Client *, struct Client *, int, char **);
-int m_protoctl(struct Client *, struct Client *, int, char **);
-int m_ping(struct Client *, struct Client *, int, char **);
-int m_nick(struct Client *, struct Client *, int, char **);
-int m_version(struct Client *, struct Client *, int, char **);
-
-#endif
+int
+m_version(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+{
+	sendto_one(sptr, ":%s 351 %s bridge/alpha. %s :TS3/P8", ConfigFileEntry.myname, parv[0], ConfigFileEntry.myname);
+	return 0;
+}
