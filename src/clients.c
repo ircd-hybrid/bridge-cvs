@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.6 2001/05/06 18:05:52 ejb Exp $
+ * $Id: clients.c,v 1.7 2001/05/07 16:36:50 ejb Exp $
  */
 
 
@@ -173,7 +173,7 @@ exit_client(cptr, from, reason)
 {
 	dlink_node *dm;
 	
-	if (cptr->type == TYPE_SERVER)
+	if (cptr->user == NULL)
 	  {
 		/* exit server; send SQUIT */
 		if (IsLocal(cptr))
@@ -192,18 +192,26 @@ exit_client(cptr, from, reason)
 		free(dm);
 
 		/* send an SQUIT for it */
-		sendto_serv_butone(cptr, ":%s SQUIT", cptr->name);
+		sendto_serv_butone(from, "SQUIT %s", cptr->name);
 	  }
 	else
 	  {
 		/* it's a client; remote it from the list and send a QUIT */
-		sendto_serv_butone(from, ":%s QUIT :%s", cptr->name, reason);
-		dm = dlinkFind(&cptr_list, cptr);
-		dlinkDelete(dm, &cptr_list);
-		free(dm);
-		dm = dlinkFind(&client_cptr_list, cptr);
-		dlinkDelete(dm, &client_cptr_list);
-		free(dm);
+		/* -- but not if it's killed */
+		if (!(cptr->flags & FLAGS_KILLED))
+			sendto_serv_butone(from, ":%s QUIT :%s", cptr->name, reason);
+
+		if ((dm = dlinkFind(&cptr_list, cptr)) != NULL)
+		  {
+			dlinkDelete(dm, &cptr_list);
+			free(dm);
+		  }
+
+		if ((dm = dlinkFind(&client_cptr_list, cptr)) != NULL)
+		  {
+			dlinkDelete(dm, &client_cptr_list);
+			free(dm);
+		  }
 	  }
 	
 	if (IsLocal(cptr))
@@ -383,6 +391,8 @@ send_chan_list(cptr, chan, list, symbol)
   char *n = nickbuf;
   struct Client *client;
 
+  *mb++ = '+';
+
   if (chan->mode & MODE_INVITE)
 	*mb++ = 'i';
   if (chan->mode & MODE_N)
@@ -418,10 +428,10 @@ send_chan_list(cptr, chan, list, symbol)
 	{
 	  client = node->data;
 
-	  if (20 + strlen(chan->name) + strlen(mb) + strlen(nickbuf) + 2 >= BUFSIZE)
+	  if (20 + strlen(chan->name) + strlen(modebuf) + strlen(nickbuf) + 2 >= BUFSIZE)
 		{
 		  /* restart */
-		  sprintf(sjbuf, "SJOIN %ld %s %s :%s", chan->ts, chan->name, mb, nickbuf);
+		  sprintf(sjbuf, "SJOIN %ld %s %s :%s", chan->ts, chan->name, modebuf, nickbuf);
 		  sendto_one(cptr, "%s", sjbuf);
 		  n = nickbuf;
 		}
@@ -430,7 +440,7 @@ send_chan_list(cptr, chan, list, symbol)
 	}
   if (n != nickbuf)
 	{
-	  sprintf(sjbuf, "SJOIN %ld %s %s :%s", chan->ts, chan->name, mb, nickbuf);
+	  sprintf(sjbuf, "SJOIN %ld %s %s :%s", chan->ts, chan->name, modebuf, nickbuf);
 	  sendto_one(cptr, "%s", sjbuf);
 	}
 }

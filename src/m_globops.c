@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_join.c,v 1.3 2001/05/07 16:36:51 ejb Exp $
+ * $Id: m_globops.c,v 1.1 2001/05/07 16:36:51 ejb Exp $
  */
 
 #include <string.h>
@@ -25,26 +25,52 @@
 #include "send.h"
 #include "config.h"
 #include "serno.h"
-#include "channel.h"
-#include "protocol.h"
 
 int
-m_join(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+m_globops(cptr, sptr, parc, parv)
+	 struct Client *cptr, *sptr;
+	 int parc;
+	 char **parv;
 {
-  /* char *user = parv[0]; */
-  char *channel = parv[1];
-  struct Channel *chan;
+  char *source = sptr->name;
+  char *text = parv[1];
+  dlink_node *node;
+  struct Client *acptr;
 
-  if ((chan = find_channel(channel)) == NULL)
+  /* we have to be quite special here.
+	 rules for sending globops:
+
+	 from SERVER to TS3: send as WALLOPS
+	 from CLIENT to TS3: send as OPERWALL
+	 from anything to Unreal: send as GLOBOPS
+	 from anything to anything: send as WALLOPS
+  */
+
+  for (node = local_cptr_list.head; node; node = node->next)
 	{
-	  chan = new_channel(channel);
+	  char *type;
+
+	  acptr = node->data;
+
+	  if (acptr == cptr)
+		continue;
+
+	  switch(acptr->localClient->servertype)
+		{
+		case PROTOCOL_TS3:
+		  if (sptr->user == NULL)
+			type = "WALLOPS"; 
+		  else
+			type = "OPERWALL";
+
+		  sendto_one(acptr, ":%s %s :%s",
+					 source, type, text);
+		  break;
+		case PROTOCOL_UNREAL:
+		  sendto_one(acptr, ":%s GLOBOPS :%s",
+					 source, text);
+		  break;
+		}
 	}
-
-  add_user_to_channel(sptr, chan, T_PEON);
-
-  /* at this point we have to convert the join into
-	 an SJOIN .. */
-
-  send_out_join(cptr, sptr->name, chan);
   return 0;
 }

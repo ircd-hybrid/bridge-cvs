@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_server.c,v 1.4 2001/05/05 15:45:03 ejb Exp $
+ * $Id: m_server.c,v 1.5 2001/05/07 16:36:53 ejb Exp $
  */
 
 #include <stdio.h>
@@ -75,7 +75,6 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		cptr->type = TYPE_SERVER;
 		
 		node = make_dlink_node();
-		printf("adding %s to server list\n", cptr->name);
 		dlinkAdd(cptr, node, &serv_cptr_list);
 		node = make_dlink_node();
 		dlinkAdd(cptr, node, &cptr_list);
@@ -98,7 +97,6 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		newclient->from = sptr;
 		newclient->local = cptr;
 		node = make_dlink_node();
-		printf("adding %s to server list\n", newclient->name);
 		dlinkAdd(newclient, node, &serv_cptr_list);
 		node = make_dlink_node();
 		dlinkAdd(newclient, node, &cptr_list);

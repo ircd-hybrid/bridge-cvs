@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_quit.c,v 1.1 2001/05/05 12:53:27 ejb Exp $
+ * $Id: m_quit.c,v 1.2 2001/05/07 16:36:52 ejb Exp $
  */
 
 #include <string.h>
@@ -25,10 +25,15 @@
 #include "send.h"
 #include "config.h"
 #include "serno.h"
+#include "channel.h"
 
 int
 m_quit(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 {
+  /* better not do this for servers! */
+  if (sptr->user)
+	remove_from_all_channels(sptr);
+
   if (parc > 1)
 	exit_client(sptr, cptr, parv[1]);
   else

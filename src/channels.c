@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: channels.c,v 1.1 2001/05/06 10:45:05 ejb Exp $
+ * $Id: channels.c,v 1.2 2001/05/07 16:36:50 ejb Exp $
  */
 
 #include <string.h>
@@ -89,4 +89,50 @@ add_user_to_channel(user, channel, type)
 	}
 
   dlinkAdd(user, node, list);
+  node = make_dlink_node();
+  dlinkAdd(channel, node, &user->user->channels);
+}
+
+void
+remove_user_from_channel(user, channel)
+	 struct Client *user;
+	 struct Channel *channel;
+{
+  dlink_node *node;
+  dlink_list *list;
+
+  if ((node = dlinkFind(&channel->ops, user)) == NULL)
+	if ((node = dlinkFind(&channel->halfops, user)) == NULL)
+	  if ((node = dlinkFind(&channel->voices, user)) == NULL)
+		if ((node = dlinkFind(&channel->peons, user)) == NULL)
+		  return;
+		else
+		  list = &channel->peons;
+	  else
+		list = &channel->voices;
+	else
+	  list = &channel->halfops;
+  else
+	list = &channel->ops;
+		  
+  dlinkDelete(node, list);
+
+  /* well, it should never be NULL, but we can't be too careful */
+  if ((node = dlinkFind(&user->user->channels, channel)))
+	dlinkDelete(node, &user->user->channels);
+}
+
+void
+remove_from_all_channels(user)
+	 struct Client *user;
+{
+  dlink_node *node;
+  struct Channel *chan;
+
+  for (node = user->user->channels.head; node; node = node->next)
+	{
+	  chan = node->data;
+
+	  remove_user_from_channel(user, chan);
+	}
 }

@@ -36,5 +36,7 @@ extern dlink_list channels;
 struct Channel *new_channel(char *);
 void add_user_to_channel(struct Client *, struct Channel *, int);
 struct Channel *find_channel(char *);
+void remove_user_from_channel(struct Client *, struct Channel *);
+void remove_from_all_channels(struct Client *);
 
 #endif  

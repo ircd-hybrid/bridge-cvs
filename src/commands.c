@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.7 2001/05/06 18:05:52 ejb Exp $
+ * $Id: commands.c,v 1.8 2001/05/07 16:36:50 ejb Exp $
  */
 
 
@@ -51,6 +51,12 @@ struct cmd cmdtab[] = {
 	{"trace", 0, m_trace},
 	{"sjoin", 0, m_sjoin},
 	{"squit", 0, m_squit},
+	{"part", 0, m_part},
+	{"globops", 0, m_globops},
+	{"operwall", 0, m_operwall},
+	{"wallops", 0, m_wallops},
+	{"join", 0, m_join},
+	{"kill", 0, m_kill},
 	{NULL, 0, NULL},
 };
 
@@ -358,8 +364,6 @@ int parse(struct Client *cptr, char *pbuffer)
   while (*end != '\0')
 	 end++;
   end--;
-
-  printf("last char in string is %c\n", *end);
 
   i = 1;
   

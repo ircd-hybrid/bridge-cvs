@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_join.c,v 1.3 2001/05/07 16:36:51 ejb Exp $
+ * $Id: m_part.c,v 1.1 2001/05/07 16:36:52 ejb Exp $
  */
 
 #include <string.h>
@@ -26,25 +26,30 @@
 #include "config.h"
 #include "serno.h"
 #include "channel.h"
-#include "protocol.h"
 
 int
-m_join(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+m_part(cptr, sptr, parc, parv)
+	 struct Client *cptr, *sptr;
+	 int parc;
+	 char **parv;
 {
   /* char *user = parv[0]; */
   char *channel = parv[1];
   struct Channel *chan;
+  char *reason = NULL;
 
   if ((chan = find_channel(channel)) == NULL)
-	{
-	  chan = new_channel(channel);
-	}
+	return 0; /* shouldn't ever happen */
 
-  add_user_to_channel(sptr, chan, T_PEON);
+  remove_user_from_channel(sptr, chan);
 
-  /* at this point we have to convert the join into
-	 an SJOIN .. */
+  if (parc > 2)
+	reason = parv[2];
 
-  send_out_join(cptr, sptr->name, chan);
+  if (reason)
+	sendto_serv_butone(cptr, ":%s PART %s :%s", parv[0], parv[1], reason);
+  else
+	sendto_serv_butone(cptr, ":%s PART %s", parv[0], parv[1]);
+
   return 0;
 }

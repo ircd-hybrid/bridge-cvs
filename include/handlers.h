@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.6 2001/05/06 10:45:02 ejb Exp $
+ * $Id: handlers.h,v 1.7 2001/05/07 16:36:47 ejb Exp $
  */
 
 #ifndef __HANDLERS_H_INCLUDED
@@ -32,5 +32,11 @@ int m_privmsg(struct Client *, struct Client *, int, char **);
 int m_trace(struct Client *, struct Client *, int, char **);
 int m_sjoin(struct Client *, struct Client *, int, char **);
 int m_squit(struct Client *, struct Client *, int, char **);
+int m_part(struct Client *, struct Client *, int, char **);
+int m_globops(struct Client *, struct Client *, int, char **);
+int m_wallops(struct Client *, struct Client *, int, char **);
+int m_operwall(struct Client *, struct Client *, int, char **);
+int m_join(struct Client *, struct Client *, int, char **);
+int m_kill(struct Client *, struct Client *, int, char **);
 
 #endif

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_nick.c,v 1.6 2001/05/06 18:05:52 ejb Exp $
+ * $Id: m_nick.c,v 1.7 2001/05/07 16:36:51 ejb Exp $
  */
 
 
@@ -67,20 +67,13 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		if (parc == 3) /* TS sends timestamp here */
 		  ts = atol(parv[2]);
 
-		if ((newclient = find_client(parv[0])) == NULL)
-		  {
-			/* no old nick? */
-			sendto_serv_butone(NULL, ":%s WALLOPS :NICK from unknown user %s(?)", ConfigFileEntry.myname, parv[0]);
-			return 0;
-		  }
-
 		/* note: we have to send out the nick change *before* we actually
 		   change their nick, or parv[0] gets clobbered and we lose the
 		   original nick */
 
 		send_out_nickchange(cptr, parv[0], nick, ts);
-		strncpy(newclient->name, nick, sizeof(newclient->name) - 1);
-		newclient->user->ts = ts;
+		strncpy(sptr->name, nick, sizeof(sptr->name) - 1);
+		sptr->user->ts = ts;
 		return 0;
 	  }
 
@@ -107,7 +100,7 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		username = parv[4];
 		hostname = parv[5];
 		server = parv[6];
-		gecos = parv[8];
+		gecos = parv[7];
 		break;
 	  default:
 		/* huh?? */

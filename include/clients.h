@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.h,v 1.5 2001/05/06 18:05:49 ejb Exp $
+ * $Id: clients.h,v 1.6 2001/05/07 16:36:47 ejb Exp $
  */
 
 #ifndef __CLIENTS_H_INCLUDED
@@ -49,15 +49,17 @@
 
 #define DoesCap(cptr, cap) ((cptr)->localClient->caps & (cap))
 
-#define CAP_TS        00000001
-#define CAP_EFNEXT    00000002
-#define CAP_SJOIN     00000004
+#define CAP_TS        0x00000001
+#define CAP_EFNEXT    0x00000002
+#define CAP_SJOIN     0x00000004
 
 #define IsRegistered(x) ((x)->localClient->status == STATUS_REGISTERED)
 #define IsLocal(x) ((x)->localClient)
 
 #define USERLEN 10
 #define HOSTLEN 64
+
+#define FLAGS_KILLED 0x000001
 
 struct User 
 {
@@ -66,6 +68,7 @@ struct User
   char server [NAMELEN + 1];
   int umodes;
   long ts;
+  dlink_list channels;
 };
 
 struct Client 
@@ -78,7 +81,8 @@ struct Client
   struct Client *local;
   int hopcount;
   int type; /* TYPE_SERVER or TYPE_CLIENT */
-  
+  long flags;
+
   struct LocalClient *localClient; /* always null for clients */
   struct User *user;
 };

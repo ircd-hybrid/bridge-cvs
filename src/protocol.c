@@ -15,12 +15,13 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: protocol.c,v 1.3 2001/05/06 10:45:07 ejb Exp $
+ * $Id: protocol.c,v 1.4 2001/05/07 16:36:53 ejb Exp $
  */
 
 #include "clients.h"
 #include "config.h"
 #include "send.h"
+#include "channel.h"
 #include "protocol.h"
 
 void
@@ -119,3 +120,33 @@ send_out_nickchange(from, oldnick, newnick, ts)
 
 }
 	
+void
+send_out_join(cptr, user, channel)
+	 struct Client *cptr;
+	 char *user;
+	 struct Channel *channel;
+{
+  dlink_node *node;
+  struct Client *acptr;
+
+  for (node = local_cptr_list.head; node; node = node->next)
+	{
+	  acptr = node->data;
+
+	  if (acptr == cptr)
+		continue;
+
+	  switch(acptr->localClient->servertype)
+		{
+		case PROTOCOL_TS3:
+		  sendto_one(acptr, ":%s SJOIN %ld %s + :%s",
+					 ConfigFileEntry.myname,
+					 channel->ts, channel->name, user);
+		  break;
+		case PROTOCOL_UNREAL:
+		  sendto_one(acptr, ":%s JOIN %s",
+					 user, channel->name);
+		  break;
+		}
+	}
+}	   

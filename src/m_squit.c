@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_squit.c,v 1.1 2001/05/06 10:45:07 ejb Exp $
+ * $Id: m_squit.c,v 1.2 2001/05/07 16:36:53 ejb Exp $
  */
 
 #include <string.h>
@@ -40,6 +40,9 @@ m_squit(cptr, sptr, parc, parv)
 	  printf("%% IRC:ERR:SQUIT for non-existant server %s\n", parv[1]);
 	  return 0;
 	}
+
+  printf("squit for server %s (reason: %s)\n",
+		 quit->name, parv[2]);
 
   if (parc > 1)
 	exit_client(quit, cptr, parv[2]);

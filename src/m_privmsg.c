@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_privmsg.c,v 1.2 2001/05/06 10:45:06 ejb Exp $
+ * $Id: m_privmsg.c,v 1.3 2001/05/07 16:36:52 ejb Exp $
  */
 
 #include <string.h>
@@ -50,8 +50,6 @@ m_privmsg(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 					 ConfigFileEntry.myname, parv[0], parv[1]);
 		  return 0;
 		}
-	  printf("message from %s to %s; not sending to %s\n",
-			 sptr->name, target->name, cptr->name);
 	  sendto_serv_butone(cptr, ":%s PRIVMSG %s :%s",
 						 sptr->name, target->name,
 						 parv[2]);
