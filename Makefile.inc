@@ -14,11 +14,12 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: Makefile.inc,v 1.2 2001/02/11 08:00:14 ejb Exp $
+# $Id: Makefile.inc,v 1.3 2001/05/05 12:53:21 ejb Exp $
 
 CC=	cc
 RM=	rm -f
-CFLAGS=	-O2 -Wall -Werror -g
+#CFLAGS=	-O2 -Wall -Werror -g
+CFLAGS=	-Wall -Werror -g
 CPPFLAGS=-I../include
 MKDEP=	$(CC) -MM
 LDFLAGS=

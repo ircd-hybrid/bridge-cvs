@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_server.c,v 1.2 2001/02/11 08:00:21 ejb Exp $
+ * $Id: m_server.c,v 1.3 2001/05/05 12:53:27 ejb Exp $
  */
 
 #include <stdio.h>
@@ -26,12 +26,16 @@
 #include "handlers.h"
 #include "config.h"
 #include "send.h"
+#include "protocol.h"
 
 /* argument for this command depend on the server linking to us */
 /* P8 sends:
 ** SERVER name hopcount :Description
 ** Actually, Unreal seems to send some extra data at the start of
 ** the description, but we'll ignore that for now
+** -- it seems this data is a server numeric; for now we ignore it.
+** i'm not sure it's possible to do anything useful with it, when we
+** have non-numeric servers on the network.. we'll see.
 */
 
 int
@@ -44,20 +48,21 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		printf("%% IRC:ERR:Not enough parameters for SERVER from %s\n", sptr->name);
 		return 0;
 	}
-
+	
+	if (find_client(parv[1])) {
+	  printf("%% IRC:ERR:Rejected server %s - already exists\n", parv[1]);
+	  exit_client(cptr, NULL, "Server already exists");
+	  return 0;
+	}
+	
 	if (!IsRegistered(cptr)) /* local server introduction */
 	{
-		if (find_client(parv[1])) {
-			printf("%% IRC:ERR:Rejected server %s - already exists\n", parv[1]);
-			exit_client(cptr, "Server already exists");
-			return 0;
-		}
-		
 		if (!(conf = find_nconf(parv[1]))) {
-			exit_client(cptr, "No N Line");
+			exit_client(cptr, NULL, "No N Line");
 			return 0;
 		}
-		
+
+		Count.servers++;
 		cptr->hopcount = atoi(parv[2]);
 		strncpy(cptr->name, parv[1], NAMELEN);
 		strncpy(cptr->info, parv[3], INFOLEN);
@@ -66,7 +71,9 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		cptr->type = TYPE_SERVER;
 		
 		node = make_dlink_node();
+		printf("adding %s to server list\n", cptr->name);
 		dlinkAdd(cptr, node, &serv_cptr_list);
+		node = make_dlink_node();
 		dlinkAdd(cptr, node, &cptr_list);
 		send_myinfo(cptr);
 		printf("%% SRV:INF:Link with server %s established\n", cptr->name);
@@ -78,16 +85,20 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		/* remote server introduction */
 		struct Client *newclient;
 		
+		Count.servers++;
 		newclient = user_newslot(0);
 		strncpy(newclient->name, parv[1], NAMELEN);
 		strncpy(newclient->info, parv[3], INFOLEN);
 		newclient->hopcount = atoi(parv[2]);
 		newclient->type = TYPE_SERVER;
-		newclient->from = cptr;
+		newclient->from = sptr;
+		newclient->local = cptr;
 		node = make_dlink_node();
+		printf("adding %s to server list\n", newclient->name);
 		dlinkAdd(newclient, node, &serv_cptr_list);
+		node = make_dlink_node();
 		dlinkAdd(newclient, node, &cptr_list);
-		sendto_serv_butone(cptr, ":%s SERVER %s %d :%s", sptr->name, newclient->name, newclient->hopcount + 1, newclient->info);
+		send_out_server(cptr, sptr->name, newclient->name, newclient->hopcount + 1, newclient->info);
 	}
 
 	return 0;

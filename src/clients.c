@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.2 2001/02/11 08:00:19 ejb Exp $
+ * $Id: clients.c,v 1.3 2001/05/05 12:53:26 ejb Exp $
  */
 
 
@@ -116,7 +116,7 @@ read_loop(void)
 	cptr = local_cptr_list.head->data;
 
 	for(;;) {
-		/* go thru list of clients (plist??) and
+		/* go thru list of clients and
 		 * handle their commands if they have 
 		 * something to do.
 		 */
@@ -124,7 +124,7 @@ read_loop(void)
 			handle_data(cptr);
 		}
 		
-		/* make sure we still have some players .. */
+		/* make sure we still have some clients .. */
 		if(cptr && cptr->next)
 			cptr = cptr->next;
 		else
@@ -144,7 +144,7 @@ read_loop(void)
 		
 		if(cptr->localClient->status == STATUS_DELETED) {
 			/* deleted client - remove */
-			exit_client(cptr, "Connection Closed");
+			exit_client(cptr, NULL, "Connection Closed");
 			cptr = local_cptr_list.head->data;
 			/* reset cptr to top of list */
 		}
@@ -156,21 +156,48 @@ read_loop(void)
 }
 
 void 
-exit_client(struct Client *cptr, char *reason)
+exit_client(struct Client *cptr, struct Client *from, char *reason)
 {
 	dlink_node *dm;
 	
-	dm = dlinkFind(&local_cptr_list, cptr);
-	dlinkDelete(dm, &local_cptr_list);
-	free(dm);
+	if (cptr->type == TYPE_SERVER)
+	  {
+		/* exit server; send SQUIT */
+		if (IsLocal(cptr))
+		  {
+			/* local client.. */
+			dm = dlinkFind(&local_cptr_list, cptr);
+			dlinkDelete(dm, &local_cptr_list);
+			free(dm);
+		  }
+		
+		dm = dlinkFind(&serv_cptr_list, cptr);
+		dlinkDelete(dm, &local_cptr_list);
+		free(dm);
+		dm = dlinkFind(&cptr_list, cptr);
+		dlinkDelete(dm, &cptr_list);
+		free(dm);
 
-	sendto_serv_butone(cptr, ":%s SQUIT %s", cptr->from->name, cptr->name);
-
-	if (cptr->localClient->fd > 0 )
-		sendto_one(cptr, "ERROR :Closing Link %s[%s]: %s", IsRegistered(cptr) ? cptr->name : "unknown", reason);
-	/* only show exit message for registered clients */
-	if (IsRegistered(cptr)) 
-		printf("%% USR:INF:Connection to %s[%s] closed\n", cptr->name, cptr->localClient->host);
+		/* send an SQUIT for it */
+		sendto_serv_butone(cptr, ":%s SQUIT", cptr->name);
+	  }
+	else
+	  {
+		/* it's a client; remote it from the list and send a QUIT */
+		sendto_serv_butone(from, ":%s QUIT :%s", cptr->name, reason);
+		dm = dlinkFind(&cptr_list, cptr);
+		dlinkDelete(dm, &cptr_list);
+		free(dm);
+	  }
+	
+	if (IsLocal(cptr))
+	  {
+		if (cptr->localClient->fd > 0 )
+		  sendto_one(cptr, "ERROR :Closing Link %s[%s]: %s", IsRegistered(cptr) ? cptr->name : "unknown", reason);
+		/* only show exit message for registered clients */
+		if (IsRegistered(cptr)) 
+		  printf("%% USR:INF:Connection to %s[%s] closed\n", cptr->name, cptr->localClient->host);
+	  }
 	free(cptr);
 }
 
@@ -236,24 +263,44 @@ send_netburst(struct Client *cptr)
 {
 	struct Client *acptr;
 	dlink_node *node;
-	
-	/* send servers first */
-	for (node = serv_cptr_list.head; node; node = node->next) {
-		acptr = node->data;
+	int hops = 0;
+	int doneservs = 0;
+	int did_this_round = 1;
 
-		if (acptr == cptr || acptr->from == cptr)
-			continue;
-		
-		switch (cptr->localClient->servertype) {
-			case PROTOCOL_P8:
-			case PROTOCOL_TS3:
-				printf("B: %s T:%s\n", acptr->name, cptr->name);
-				sendto_one(cptr, ":%s SERVER %s %d :%s", acptr->from ? acptr->from->name : ConfigFileEntry.myname, acptr->name, acptr->hopcount, acptr->info);
-				break;
-			default:
-				break;
-		}
-	}
+	/* send servers first */
+
+	/* send everything for <x> hops.. */
+	for (hops = 1; did_this_round && doneservs < Count.servers; hops++)
+	  {
+		did_this_round = 0;
+		printf("sending for hops = %d\n", hops);
+		for (node = serv_cptr_list.head; node; node = node->next) 
+		  {
+			acptr = node->data;
+			
+			if (acptr == cptr || acptr->from == cptr)
+			  continue;
+			
+			if (acptr->hopcount == hops)
+			  {
+				did_this_round++;
+				switch (cptr->localClient->servertype) 
+				  {
+				  case PROTOCOL_P8:
+					/* XXX send '0', we don't support server numerics right now */
+					sendto_one(cptr, ":%s SERVER %s %d 0 :%s", acptr->from ? acptr->from->name : ConfigFileEntry.myname, acptr->name, acptr->hopcount, acptr->info);
+					break;
+				  case PROTOCOL_TS3:
+					sendto_one(cptr, ":%s SERVER %s %d :%s", acptr->from ? acptr->from->name : ConfigFileEntry.myname, acptr->name, acptr->hopcount, acptr->info);
+					break;
+				  default:
+					printf("unknown server type %d while bursting\n", cptr->localClient->servertype);
+					break;
+				  }
+				doneservs++;
+			  }
+		  }
+	  }
 }
 
 				

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: bridge.c,v 1.2 2001/02/11 08:00:19 ejb Exp $
+ * $Id: bridge.c,v 1.3 2001/05/05 12:53:26 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -42,6 +42,8 @@
 int serv_fd;
 time_t CurrentTime;
 
+count_t Count;
+
 int
 main(int argc, char **argv)
 {
@@ -54,7 +56,8 @@ main(int argc, char **argv)
 	memset(&local_cptr_list, 0, sizeof(local_cptr_list));
 	memset(&serv_cptr_list, 0, sizeof(serv_cptr_list));
 	memset(&cptr_list, 0, sizeof(cptr_list));
-	
+	memset(&Count, 0, sizeof(Count));
+
 	printf("%% Loading configuration...\n");
 	parse_config();
 	

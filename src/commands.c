@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.3 2001/05/04 23:11:24 ejb Exp $
+ * $Id: commands.c,v 1.4 2001/05/05 12:53:26 ejb Exp $
  */
 
 
@@ -45,6 +45,7 @@ struct cmd cmdtab[] = {
 	{"ping", MFLG_UNREG, m_ping},
 	{"nick", 0, m_nick},
 	{"version", 0, m_version},
+	{"quit", MFLG_UNREG, m_quit},
 	{NULL, 0, NULL},
 };
 
@@ -76,7 +77,7 @@ handle_data(struct Client *cptr)
 	if (i == -1) {
 		printf("%% NET:ERR:Read error from %s[%s]: %s\n", IsRegistered(cptr) ? cptr->name : "unknown", cptr->localClient->host, strerror(errno));
 		cptr->localClient->fd = -1;
-		exit_client(cptr, "Read error");
+		exit_client(cptr, NULL, "Read error");
 		return -1;
 	}
 	b = buffer;
@@ -110,9 +111,7 @@ handle_data(struct Client *cptr)
 		s += 2; b += 2;
 		bytes += 2;
 		
-#if 0
 		printf("Read line: %s\n", line);
-#endif
 		parse(cptr, line, s - 3);
 		if (bytes >= i)
 			break;
@@ -238,44 +237,45 @@ int parse(struct Client *cptr, char *pbuffer, char *bufend)
 
       sender = ch;
 
-      if( (s = strchr(ch, ' ')))
-	  {
+      if ((s = strchr(ch, ' ')))
+		{
 		  *s = '\0';
 		  s++;
 		  ch = s;
-	  }
+		}
 	  
       i = 0;
 	  
       if (*sender)
-	  {
+		{
           from = find_client(sender);
 		  
           para[0] = from->name;
           
-          if (!from) {
+          if (!from) 
+			{
 			  printf("%% IRC:ERR:Client %s is unknown!\n", sender);
 			  /* unknown prefix, client should be removed */
 			  return -1;
-		  }
+			}
 		  
-		  if (from->from && from->from != cptr) /* from->from == NULL for local server */
+		  if (from->from && from->local != cptr) /* from->from == NULL for local server */
             {
 				/* wrong direction */
 				printf("%% IRC:ERR:Wrong direction from %s (was %s, should be %s)\n", from->name, sender, cptr->name);
 				return -1;
 			}
-	  }
+		}
       while (*ch == ' ')
 		  ch++;
     }
   
   if (*ch == '\0')
-  {
+	{
 	  return -1;
-  }
+	}
 
-  if( strlen(ch) >= 3 && *(ch + 3) == ' '  && /* ok, lets see if its a possible numeric.. */
+  if (strlen(ch) >= 3 && *(ch + 3) == ' '  && /* ok, lets see if its a possible numeric.. */
       isdigit(*ch) && isdigit(*(ch + 1)) && isdigit(*(ch + 2)) )
     {
       mptr = NULL;

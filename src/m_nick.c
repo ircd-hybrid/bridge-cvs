@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_nick.c,v 1.3 2001/05/04 23:11:24 ejb Exp $
+ * $Id: m_nick.c,v 1.4 2001/05/05 12:53:27 ejb Exp $
  */
 
 
@@ -27,6 +27,7 @@
 #include "handlers.h"
 #include "config.h"
 #include "send.h"
+#include "protocol.h"
 
 /*
 ** TS3:
@@ -40,6 +41,9 @@
 **      parv[6] = hostname
 **      parv[7] = server
 **      parv[8] = ircname
+** or for a nick change:
+**      parv[0] = sender prefix
+**      parv[1] = new nick
 */
 
 int
@@ -56,7 +60,34 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	struct Client *newclient;
 	dlink_node *node;
 
-	switch (cptr->localClient->servertype) {
+	if (parc < 4) 
+	  {
+		/* nick change */
+		nick = parv[1];
+		if (parc == 3) /* TS sends timestamp here */
+		  ts = atol(parv[2]);
+
+		if ((newclient = find_client(parv[0])) == NULL)
+		  {
+			/* no old nick? */
+			sendto_serv_butone(NULL, ":%s WALLOPS :NICK from unknown user %s(?)", ConfigFileEntry.myname, parv[0]);
+			return 0;
+		  }
+
+		/* note: we have to send out the nick change *before* we actually
+		   change their nick, or parv[0] gets clobbered and we lose the
+		   original nick */
+
+		send_out_nickchange(parv[0], nick, ts);
+		printf("NICK: %s -> %s [TS %ld]\n", parv[0], nick, ts);
+		strncpy(newclient->name, nick, sizeof(newclient->name) - 1);
+		newclient->user->ts = ts;
+		return 0;
+	  }
+
+	/* else its a new nick being introduced */
+	switch (cptr->localClient->servertype) 
+	  {
 		case PROTOCOL_TS3:
 			/* TS3 nick introduction .. */
 			nick = parv[1];
@@ -83,12 +114,13 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	strncpy(newclient->info, gecos, INFOLEN);
 	newclient->hopcount = hops;
 	newclient->type = TYPE_CLIENT;
-	newclient->from = cptr;
+	newclient->from = sptr;
+	newclient->local = cptr;
 	newclient->user = malloc(sizeof(struct User));
 	strncpy(newclient->user->username, username, USERLEN);
 	strncpy(newclient->user->hostname, hostname, HOSTLEN);
 	newclient->user->umodes = 0;
-
+	newclient->user->ts = ts;
 	node = make_dlink_node();
 	dlinkAdd(newclient, node, &cptr_list);
 	

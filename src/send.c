@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: send.c,v 1.3 2001/05/04 23:11:25 ejb Exp $
+ * $Id: send.c,v 1.4 2001/05/05 12:53:28 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -109,9 +109,11 @@ sendto_one(struct Client *cptr, char *fmt, ...)
 	char str[BUFSIZE];
 	char *c;
 	int len;
-	
+
+	printf("sending to %s\n", cptr->name);
 	if (!IsLocal(cptr)) {
-	  cptr = cptr->from;
+	  printf("%s is not local; actually sending to %s\n", cptr->name, cptr->local->name);
+	  cptr = cptr->local;
 	}
 	
 	va_start(ap, fmt);
@@ -121,7 +123,7 @@ sendto_one(struct Client *cptr, char *fmt, ...)
 	str[len++] = '\r';
 	str[len++] = '\n';
 	str[len++] = '\0';
-	
+
 #ifdef DEBUG_SEND
 	printf("%% NET:DBG:Sent: %s", str);
 #endif
@@ -131,7 +133,7 @@ sendto_one(struct Client *cptr, char *fmt, ...)
 			/* SendQ exceeded, try to flush */
 			if(flush_sendq(cptr) == -1) {
 				/* failed, kill the client */
-				exit_client(cptr, "SendQ Exceeded");
+				exit_client(cptr, NULL, "SendQ Exceeded");
 				return;
 			}
 			/* worked, continue sending data */
