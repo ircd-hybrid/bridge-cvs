@@ -15,14 +15,15 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: send.h,v 1.2 2001/02/11 08:00:18 ejb Exp $
+ * $Id: send.h,v 1.3 2001/05/07 21:31:56 ejb Exp $
  */
 
 #ifndef __SEND_H_INCLUDED
 #define __SEND_H_INCLUDED
 
 void clear_sendq(struct Client *);
-void sendto_one(struct Client *cptr, char *fmt, ...);
-void sendto_serv_butone(struct Client *cptr, char *fmt, ...);
+void sendto_one(struct Client *, char *, ...);
+void sendto_serv_butone(struct Client *, char *, ...);
+void sendto_cap_serv_butone(struct Client *, int, char *, ...);
 
 #endif

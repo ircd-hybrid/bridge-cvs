@@ -15,13 +15,14 @@
 #define MODE_M       0x00000080
 
 struct Channel {
-  char name[CHANLEN];
+  char name[CHANLEN + 1];
   dlink_list ops;
   dlink_list voices;
   dlink_list halfops;
   dlink_list peons;
   unsigned long mode;
-  char key[KEYLEN];
+  char key[KEYLEN + 1];
+  char topic[TOPICLEN + 1];
   long limit;
   long ts;
 };

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_kill.c,v 1.1 2001/05/07 16:36:51 ejb Exp $
+ * $Id: m_kill.c,v 1.2 2001/05/07 21:31:59 ejb Exp $
  */
 
 #include <string.h>
@@ -36,18 +36,6 @@ m_kill(struct Client *cptr, struct Client *sptr, int parc, char **parv)
   char *reason;
   char *path;
 
-  if ((victim = find_client(parv[1])) == NULL)
-	{
-	  /* we could get a KILL for a user we don't know about.. pass
-		 it on still, but don't remove the client */
-	  /* don't pass it on for now .. i'm not sure what the correct
-		 behaviour is here.. we can't send back a KILL, since the client
-		 won't exist there. for now, just flag it and return */
-	  sendto_serv_butone(NULL, ":%s WALLOPS :KILL for non-existant user %s ???",
-						 ConfigFileEntry.myname, parv[1]);
-	  return 0;
-	}
-
   path = parv[2];
   reason = strchr(parv[2], ' ');
   
@@ -55,6 +43,19 @@ m_kill(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	*reason++ = '\0';
   else
 	reason = "()";
+
+  if ((victim = find_client(parv[1])) == NULL)
+	{
+	  /* we could get a KILL for a user we don't know about.. pass
+		 it on still, but don't remove the client */
+	  /* don't pass it on for now .. i'm not sure what the correct
+		 behaviour is here.. we can't send back a KILL, since the client
+		 won't exist there. for now, just flag it and return */
+	  sendto_serv_butone(NULL, ":%s WALLOPS :Received KILL messages for non-existent user %s from %s via %s (Path: %s)",
+						 ConfigFileEntry.myname, parv[1], sptr->name, cptr->name, path);
+	  return 0;
+	}
+
 
   victim->flags |= FLAGS_KILLED;
 

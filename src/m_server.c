@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_server.c,v 1.5 2001/05/07 16:36:53 ejb Exp $
+ * $Id: m_server.c,v 1.6 2001/05/07 21:32:00 ejb Exp $
  */
 
 #include <stdio.h>
@@ -74,12 +74,21 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		cptr->localClient->servertype = conf->protocol;
 		cptr->type = TYPE_SERVER;
 		
+		switch(cptr->localClient->servertype)
+		  {
+		  case PROTOCOL_UNREAL:
+			cptr->localClient->caps |= CAP_HALFOPS;
+			break;
+		  }
+
 		node = make_dlink_node();
 		dlinkAdd(cptr, node, &serv_cptr_list);
 		node = make_dlink_node();
 		dlinkAdd(cptr, node, &cptr_list);
 		send_myinfo(cptr);
 		printf("%% SRV:INF:Link with server %s established\n", cptr->name);
+		sendto_serv_butone(NULL, ":%s WALLOPS :Link with server %s established\n",
+						   ConfigFileEntry.myname, cptr->name);
 		send_netburst(cptr);
 		sendto_serv_butone(cptr, "SERVER %s %d :%s", cptr->name, cptr->hopcount + 1, cptr->info);
 	}

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.7 2001/05/07 16:36:47 ejb Exp $
+ * $Id: handlers.h,v 1.8 2001/05/07 21:31:55 ejb Exp $
  */
 
 #ifndef __HANDLERS_H_INCLUDED
@@ -38,5 +38,9 @@ int m_wallops(struct Client *, struct Client *, int, char **);
 int m_operwall(struct Client *, struct Client *, int, char **);
 int m_join(struct Client *, struct Client *, int, char **);
 int m_kill(struct Client *, struct Client *, int, char **);
+int m_away(struct Client *, struct Client *, int, char **);
+int m_mode(struct Client *, struct Client *, int, char **);
+int m_capab(struct Client *, struct Client *, int, char **);
+int m_topic(struct Client *, struct Client *, int, char **);
 
 #endif

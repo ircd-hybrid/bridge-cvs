@@ -15,28 +15,33 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_pass.c,v 1.3 2001/05/07 21:31:59 ejb Exp $
+ * $Id: m_capab.c,v 1.1 2001/05/07 21:31:59 ejb Exp $
  */
 
-
-#include <stdio.h>
 #include <string.h>
 
 #include "clients.h"
 #include "handlers.h"
+#include "send.h"
+#include "config.h"
+#include "serno.h"
+#include "version.h"
+
+/* CAPAB cap cap cap ... */
 
 int
-m_pass(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+m_capab(cptr, sptr, parc, parv)
+	 struct Client *cptr, *sptr;
+	 int parc;
+	 char **parv;
 {
-	if (parc == 3) { /* three argument to PASS, so it's a possible TS server */
-		if (strcmp(parv[2], "TS")) /* does TS */
-			cptr->localClient->caps |= CAP_TS;
-#if 0
-		else if (strcmp(parv[2], "EFNEXT")) /* EFNeXT - Does TS too */
-			cptr->localClient->caps |= CAP_TS | CAP_EFNEXT;
-#endif
-	}
-	
-	strncpy(cptr->localClient->pass, parv[1], sizeof(cptr->localClient->pass));
-	return 0;
+  int i = 1;
+ 
+  while (i < parc) {
+	if (!strcmp(parv[i], "HOPS"))
+	  cptr->localClient->caps |= CAP_HALFOPS;
+	i++;
+  }
+
+  return 0;
 }

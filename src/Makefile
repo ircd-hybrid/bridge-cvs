@@ -14,7 +14,7 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-# $Id: Makefile,v 1.7 2001/05/07 16:36:50 ejb Exp $
+# $Id: Makefile,v 1.8 2001/05/07 21:31:58 ejb Exp $
 
 include ../Makefile.inc
 
@@ -45,6 +45,10 @@ SRCS=	bridge.c \
 	m_operwall.c \
 	m_globops.c \
 	m_kill.c \
+	m_away.c \
+	m_mode.c \
+	m_capab.c \
+	m_topic.c \
 
 OBJS=	$(SRCS:.c=.o)
 

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.7 2001/05/07 16:36:50 ejb Exp $
+ * $Id: clients.c,v 1.8 2001/05/07 21:31:58 ejb Exp $
  */
 
 
@@ -278,6 +278,7 @@ send_myinfo(cptr)
 		break;
 	  case PROTOCOL_TS3:
 		sendto_one(cptr, "PASS %s :TS", conf->pass);
+		sendto_one(cptr, "CAPAB HOPS");
 		sendto_one(cptr, "SERVER %s %d :%s", ConfigFileEntry.myname, 1, ConfigFileEntry.myinfo);
 		sendto_one(cptr, "SVINFO 3 3 0 :%d", CurrentTime);
 		break;
@@ -287,6 +288,23 @@ send_myinfo(cptr)
 	  }
 }
 
+/* have to say who we're sending to because of different servers
+   using different modes for different things */
+char *
+user_mode_to_string(to, cptr)
+	 struct Client *cptr, *to;
+{
+  static char modes[64]; /* hi sts :> */
+  char *p = modes;
+
+  if (cptr->umodes & UMODE_OPER)
+	*p++ = 'o';
+  if (cptr->umodes & UMODE_INVISIBLE)
+	*p++ = 'i';
+
+  return modes;
+}
+  
 void
 send_netburst(cptr)
 	 struct Client *cptr;
@@ -303,7 +321,7 @@ send_netburst(cptr)
 	for (hops = 1; did_this_round && doneservs < Count.servers; hops++)
 	  {
 		did_this_round = 0;
-		printf("sending for hops = %d\n", hops);
+
 		for (node = serv_cptr_list.head; node; node = node->next) 
 		  {
 			acptr = node->data;
@@ -347,16 +365,23 @@ send_netburst(cptr)
 			sendto_one(cptr, "NICK %s %d %ld %s %s %s 0 :%s",
                        acptr->name, acptr->hopcount + 1, acptr->user->ts, acptr->user->username,
 					   acptr->user->hostname, acptr->from->name, acptr->info);
+			sendto_one(cptr, ":%s MODE %s :+%s",
+					   acptr->name, acptr->name, user_mode_to_string(cptr, acptr));
 			break;
 		  case PROTOCOL_TS3:
-			sendto_one(cptr, "NICK %s %d %ld + %s %s %s :%s",
-					   acptr->name, acptr->hopcount + 1, acptr->user->ts, acptr->user->username,
-					   acptr->user->hostname, acptr->from->name, acptr->info);
+			sendto_one(cptr, "NICK %s %d %ld +%s %s %s %s :%s",
+					   acptr->name, acptr->hopcount + 1, acptr->user->ts, user_mode_to_string(cptr, acptr),
+					   acptr->user->username, acptr->user->hostname, acptr->from->name, acptr->info);
 			break;
 		  default:
 			printf("Unsupported protocol for NICK in send_netburst\n");
 			break;
 		  }
+
+		/* send AWAY too.. i don't think sending to all servers will cause a problem */
+		if (acptr->flags & FLAGS_AWAY)
+		  sendto_one(cptr, ":%s AWAY :%s",
+					 acptr->name, acptr->user->away);
 	  }
 
 	/* now we send channels */

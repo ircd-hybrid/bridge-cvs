@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: protocol.c,v 1.4 2001/05/07 16:36:53 ejb Exp $
+ * $Id: protocol.c,v 1.5 2001/05/07 21:32:00 ejb Exp $
  */
 
 #include "clients.h"
@@ -150,3 +150,58 @@ send_out_join(cptr, user, channel)
 		}
 	}
 }	   
+
+void
+send_out_topic(cptr, chan, who, ts, newtopic)
+	 struct Client *cptr, *who;
+	 struct Channel *chan;
+	 long ts;
+	 char *newtopic;
+{
+  dlink_node *node;
+  struct Client *acptr;
+
+  for (node = local_cptr_list.head; node; node = node->next)
+	{
+	  acptr = node->data;
+
+	  switch (acptr->localClient->servertype)
+		{
+		case PROTOCOL_UNREAL:
+		  sendto_one(acptr, ":%s TOPIC %s %s %ld :%s",
+					 who->name, chan->name, who->name,
+					 ts, newtopic);
+		  break;
+		case PROTOCOL_TS3:
+		  sendto_one(acptr, ":%s TOPIC %s :%s",
+					 who->name, chan->name, newtopic);
+		  break;
+		}
+	}
+}
+
+void
+send_out_umode(from, who, target, which, mode)
+	 struct Client *from, *who, *target;
+	 char which, mode;
+{
+  dlink_node *node;
+  struct Client *acptr;
+
+  for (node = local_cptr_list.head; node; node = node->next)
+	{
+	  acptr = node->data;
+
+	  if (acptr == from)
+		continue;
+
+	  switch(acptr->localClient->servertype)
+		{
+		case PROTOCOL_UNREAL:
+		case PROTOCOL_TS3:
+		  sendto_one(acptr, ":%s MODE %s :%c%c",
+					 who->name, target->name, which, mode);
+		default:
+		}
+	}
+}

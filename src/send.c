@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: send.c,v 1.6 2001/05/06 10:45:07 ejb Exp $
+ * $Id: send.c,v 1.7 2001/05/07 21:32:00 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ sendto_serv_butone(struct Client *cptr, char *fmt, ...)
 	  {
 		acptr = node->data;
 		
-		if (acptr != cptr) 
+		if (acptr != cptr && IsRegistered(acptr)) 
 		  {
 			sendto_one(acptr, "%s", str);
 		  }
@@ -104,6 +104,35 @@ sendto_serv_butone(struct Client *cptr, char *fmt, ...)
 	  }
 }
 
+void
+sendto_cap_serv_butone(struct Client *cptr, int cap, char *fmt, ...)
+{
+	va_list ap;
+	char str[BUFSIZE];
+	dlink_node *node, *next_ptr;
+	struct Client *acptr;
+	int len;
+	
+	va_start(ap, fmt);
+	len = vsprintf(str, fmt, ap);
+	va_end(ap);
+
+	str[len++] = '\r';
+	str[len++] = '\n';
+	str[len++] = '\0';
+
+	for (node = local_cptr_list.head; node; node = next_ptr) 
+	  {
+		acptr = node->data;
+		
+		if (acptr != cptr && IsRegistered(acptr) && DoesCap(acptr, cap)) 
+		  {
+			sendto_one(acptr, "%s", str);
+		  }
+		
+		next_ptr = node->next;
+	  }
+}
 
 void 
 sendto_one(struct Client *cptr, char *fmt, ...)

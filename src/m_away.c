@@ -15,28 +15,45 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_pass.c,v 1.3 2001/05/07 21:31:59 ejb Exp $
+ * $Id: m_away.c,v 1.1 2001/05/07 21:31:58 ejb Exp $
  */
 
-
-#include <stdio.h>
 #include <string.h>
 
 #include "clients.h"
 #include "handlers.h"
+#include "send.h"
+#include "config.h"
+#include "serno.h"
 
 int
-m_pass(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+m_away(cptr, sptr, parc, parv)
+	 struct Client *cptr, *sptr;
+	 int parc;
+	 char **parv;
 {
-	if (parc == 3) { /* three argument to PASS, so it's a possible TS server */
-		if (strcmp(parv[2], "TS")) /* does TS */
-			cptr->localClient->caps |= CAP_TS;
-#if 0
-		else if (strcmp(parv[2], "EFNEXT")) /* EFNeXT - Does TS too */
-			cptr->localClient->caps |= CAP_TS | CAP_EFNEXT;
-#endif
+  if (IsServer(sptr))
+	{
+	  sendto_serv_butone(NULL, ":%s WALLOPS :Received AWAY from server %s (via %s)",
+						 ConfigFileEntry.myname, sptr->name, cptr->name);
+	  return 0;
 	}
-	
-	strncpy(cptr->localClient->pass, parv[1], sizeof(cptr->localClient->pass));
-	return 0;
+
+  if (parc > 1)
+	{
+	  /* client setting themself away */
+	  sptr->flags |= FLAGS_AWAY;
+	  strcpy(sptr->user->away, parv[1]);
+	  sendto_serv_butone(cptr, ":%s AWAY :%s", 
+						 parv[0], parv[1]);
+	  return 0;
+	}
+  else
+	{
+	  /* client returning from being away */
+	  sptr->flags &= ~FLAGS_AWAY;
+	  sendto_serv_butone(cptr, ":%s AWAY",
+						 parv[0]);
+	  return 0;
+	}
 }

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.8 2001/05/07 16:36:50 ejb Exp $
+ * $Id: commands.c,v 1.9 2001/05/07 21:31:58 ejb Exp $
  */
 
 
@@ -57,6 +57,10 @@ struct cmd cmdtab[] = {
 	{"wallops", 0, m_wallops},
 	{"join", 0, m_join},
 	{"kill", 0, m_kill},
+	{"away", 0, m_away},
+	{"mode", 0, m_mode},
+	{"capab", 0, m_capab},
+	{"topic", 0, m_topic},
 	{NULL, 0, NULL},
 };
 
@@ -238,6 +242,9 @@ do_numeric(char *numeric, struct Client *cptr, struct Client *from, int i, char 
   char buffer[BUFSIZE * 2];
   int j;
 
+  if (strcasecmp(para[1], ConfigFileEntry.myname) == 0)
+	return 0;
+
   if ((target = find_client(para[1])) == NULL)
 	{
 	  sendto_serv_butone(NULL, ":%s WALLOPS :Numeric from %s to non-existant client %s", 
@@ -360,16 +367,21 @@ int parse(struct Client *cptr, char *pbuffer)
           return -1;
     }
 
-  end = s;
-  while (*end != '\0')
-	 end++;
-  end--;
-
-  i = 1;
-  
   if (s)
-    string_to_array(s, end, &i, para);
-   
+	{
+	  end = s;
+	  while (*end != '\0')
+		end++;
+	  end--;
+	  
+	  i = 1;
+	  
+	  if (s)
+		string_to_array(s, end, &i, para);
+	}
+  else
+	i = 1;
+
   if (mptr == NULL)
     return do_numeric(numeric, cptr, from, i, para);
   else

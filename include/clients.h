@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.h,v 1.6 2001/05/07 16:36:47 ejb Exp $
+ * $Id: clients.h,v 1.7 2001/05/07 21:31:55 ejb Exp $
  */
 
 #ifndef __CLIENTS_H_INCLUDED
@@ -35,6 +35,9 @@
 #define IPLEN 64
 #define PASSLEN 32
 #define INFOLEN 128
+#define USERLEN 10
+#define HOSTLEN 64
+#define TOPICLEN 120 
 
 #define STATUS_UNREGISTERED 0
 #define STATUS_DELETED 1
@@ -50,25 +53,28 @@
 #define DoesCap(cptr, cap) ((cptr)->localClient->caps & (cap))
 
 #define CAP_TS        0x00000001
-#define CAP_EFNEXT    0x00000002
+#define CAP_HALFOPS   0x00000002
 #define CAP_SJOIN     0x00000004
 
 #define IsRegistered(x) ((x)->localClient->status == STATUS_REGISTERED)
 #define IsLocal(x) ((x)->localClient)
-
-#define USERLEN 10
-#define HOSTLEN 64
+#define IsServer(x) (!((x)->user))
 
 #define FLAGS_KILLED 0x000001
+#define FLAGS_AWAY   0x000002
+
+#define UMODE_INVISIBLE 0x00000001
+#define UMODE_OPER      0x00000002
 
 struct User 
 {
   char username [USERLEN + 1];
   char hostname [HOSTLEN + 1];
   char server [NAMELEN + 1];
-  int umodes;
+  long umodes;
   long ts;
   dlink_list channels;
+  char away[TOPICLEN + 1];
 };
 
 struct Client 
@@ -82,6 +88,7 @@ struct Client
   int hopcount;
   int type; /* TYPE_SERVER or TYPE_CLIENT */
   long flags;
+  long umodes;
 
   struct LocalClient *localClient; /* always null for clients */
   struct User *user;
