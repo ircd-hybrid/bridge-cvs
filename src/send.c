@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: send.c,v 1.5 2001/05/05 15:45:04 ejb Exp $
+ * $Id: send.c,v 1.6 2001/05/06 10:45:07 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -91,14 +91,17 @@ sendto_serv_butone(struct Client *cptr, char *fmt, ...)
 	str[len++] = '\n';
 	str[len++] = '\0';
 
-	for (node = local_cptr_list.head; node; node = next_ptr) {
+	for (node = local_cptr_list.head; node; node = next_ptr) 
+	  {
 		acptr = node->data;
-		if (acptr != cptr) {
+		
+		if (acptr != cptr) 
+		  {
 			sendto_one(acptr, "%s", str);
-		}
+		  }
 		
 		next_ptr = node->next;
-	}
+	  }
 }
 
 

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_join.c,v 1.1 2001/05/05 15:45:02 ejb Exp $
+ * $Id: m_join.c,v 1.2 2001/05/06 10:45:06 ejb Exp $
  */
 
 #include <string.h>
@@ -25,9 +25,27 @@
 #include "send.h"
 #include "config.h"
 #include "serno.h"
+#include "channel.h"
 
 int
 m_join(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 {
+  /* char *user = parv[0]; */
+  char *channel = parv[1];
+  struct Channel *chan;
+
+  if ((chan = find_channel(channel)) == NULL)
+	{
+	  chan = new_channel(channel);
+	}
+
+  add_user_to_channel(sptr, chan, T_PEON);
+
+  /* at this point we have to convert the join into
+	 an SJOIN .. */
+
+  /*
+  send_out_join(cptr, user, channel);
+  */
   return 0;
 }

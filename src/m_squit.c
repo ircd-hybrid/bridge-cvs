@@ -15,22 +15,36 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.6 2001/05/06 10:45:02 ejb Exp $
+ * $Id: m_squit.c,v 1.1 2001/05/06 10:45:07 ejb Exp $
  */
 
-#ifndef __HANDLERS_H_INCLUDED
-#define __HANDLERS_H_INCLUDED
+#include <string.h>
 
-int m_pass(struct Client *, struct Client *, int, char **);
-int m_server(struct Client *, struct Client *, int, char **);
-int m_protoctl(struct Client *, struct Client *, int, char **);
-int m_ping(struct Client *, struct Client *, int, char **);
-int m_nick(struct Client *, struct Client *, int, char **);
-int m_version(struct Client *, struct Client *, int, char **);
-int m_quit(struct Client *, struct Client *, int, char **);
-int m_privmsg(struct Client *, struct Client *, int, char **);
-int m_trace(struct Client *, struct Client *, int, char **);
-int m_sjoin(struct Client *, struct Client *, int, char **);
-int m_squit(struct Client *, struct Client *, int, char **);
+#include "clients.h"
+#include "handlers.h"
+#include "send.h"
+#include "config.h"
+#include "serno.h"
 
-#endif
+int
+m_squit(cptr, sptr, parc, parv)
+	 struct Client *cptr, *sptr;
+	 int parc;
+	 char **parv;
+{
+  struct Client *quit;
+
+  if ((quit = find_client(parv[1])) == NULL)
+	{
+	  /* no server! */
+	  printf("%% IRC:ERR:SQUIT for non-existant server %s\n", parv[1]);
+	  return 0;
+	}
+
+  if (parc > 1)
+	exit_client(quit, cptr, parv[2]);
+  else
+	exit_client(quit, cptr, sptr->name);
+  
+  return 0;
+}

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.5 2001/05/05 15:45:02 ejb Exp $
+ * $Id: commands.c,v 1.6 2001/05/06 10:45:06 ejb Exp $
  */
 
 
@@ -48,6 +48,9 @@ struct cmd cmdtab[] = {
 	{"version", 0, m_version},
 	{"quit", MFLG_UNREG, m_quit},
 	{"privmsg", 0, m_privmsg},
+	{"trace", 0, m_trace},
+	{"sjoin", 0, m_sjoin},
+	{"squit", 0, m_squit},
 	{NULL, 0, NULL},
 };
 
@@ -288,6 +291,14 @@ int parse(struct Client *cptr, char *pbuffer, char *bufend)
 			  sendto_serv_butone(NULL, ":%s WALLOPS :Unknown prefix %s from %s\n", ConfigFileEntry.myname,
 								 sender, cptr->name);
 			  /* unknown prefix, client should be removed */
+			  if (strchr(sender, '.'))
+				sendto_one(cptr, ":%s SQUIT %s :%s(?) <- %s",
+						   ConfigFileEntry.myname, sender,
+						   sender, cptr->name);
+			  else
+				sendto_one(cptr, ":%s KILL %s :%s (%s(?) <- %s)",
+						   ConfigFileEntry.myname, sender,
+						   ConfigFileEntry.myname, sender, cptr->name);
 			  return -1;
 			}
 		  

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_version.c,v 1.3 2001/05/05 15:45:03 ejb Exp $
+ * $Id: m_version.c,v 1.4 2001/05/06 10:45:07 ejb Exp $
  */
 
 #include <string.h>
@@ -25,6 +25,7 @@
 #include "send.h"
 #include "config.h"
 #include "serno.h"
+#include "version.h"
 
 int
 m_version(struct Client *cptr, struct Client *sptr, int parc, char **parv)
@@ -33,7 +34,6 @@ m_version(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	{
 	  struct Client *them;
 
-	  printf("remote version from %s for %s\n", parv[0], parv[1]);
 	  /* remote version */
 	  if ((them = find_client(parv[1])) == NULL)
 		{
@@ -44,7 +44,7 @@ m_version(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	  return 0;
 	}
 
-  printf("version for me from %s\n", parv[0]);
-  sendto_one(sptr, ":%s 351 %s bridge/alpha(%s). %s :TS3/Unreal", ConfigFileEntry.myname, parv[0], SERIALNUM, ConfigFileEntry.myname);
+  sendto_one(sptr, ":%s 351 %s %s(%s). %s :TS3/Unreal", 
+			 ConfigFileEntry.myname, parv[0], VERSION, SERIALNUM, ConfigFileEntry.myname);
   return 0;
 }

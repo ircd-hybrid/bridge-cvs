@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: protocol.c,v 1.2 2001/05/05 15:45:03 ejb Exp $
+ * $Id: protocol.c,v 1.3 2001/05/06 10:45:07 ejb Exp $
  */
 
 #include "clients.h"
@@ -54,7 +54,6 @@ send_out_server(sptr, source, name, hopcount, info)
 	}
 }
   
-
 void
 send_out_nick(from, prefix, nick, hops, ts, umodes, user, host, server, name)
 	 struct Client *from;

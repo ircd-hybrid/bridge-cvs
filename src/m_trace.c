@@ -15,22 +15,35 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.6 2001/05/06 10:45:02 ejb Exp $
+ * $Id: m_trace.c,v 1.1 2001/05/06 10:45:07 ejb Exp $
  */
 
-#ifndef __HANDLERS_H_INCLUDED
-#define __HANDLERS_H_INCLUDED
+#include <string.h>
 
-int m_pass(struct Client *, struct Client *, int, char **);
-int m_server(struct Client *, struct Client *, int, char **);
-int m_protoctl(struct Client *, struct Client *, int, char **);
-int m_ping(struct Client *, struct Client *, int, char **);
-int m_nick(struct Client *, struct Client *, int, char **);
-int m_version(struct Client *, struct Client *, int, char **);
-int m_quit(struct Client *, struct Client *, int, char **);
-int m_privmsg(struct Client *, struct Client *, int, char **);
-int m_trace(struct Client *, struct Client *, int, char **);
-int m_sjoin(struct Client *, struct Client *, int, char **);
-int m_squit(struct Client *, struct Client *, int, char **);
+#include "clients.h"
+#include "handlers.h"
+#include "send.h"
+#include "config.h"
+#include "serno.h"
+#include "version.h"
 
-#endif
+int
+m_trace(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+{
+  struct Client *acptr;
+  char *next;
+
+  acptr = find_server(parv[1]);
+  if (acptr == NULL)
+	return 0;
+
+  if (acptr->from == NULL)
+	next = acptr->name;
+  else
+	next = acptr->from->name;
+
+  sendto_one(sptr, ":%s 200 %s Link %s %s :%s",
+			 ConfigFileEntry.myname, parv[0], VERSION, parv[1], next);
+  sendto_one(acptr, ":%s TRACE %s", parv[0], parv[1]);
+  return 0;
+}
