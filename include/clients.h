@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.h,v 1.4 2001/05/05 15:44:59 ejb Exp $
+ * $Id: clients.h,v 1.5 2001/05/06 18:05:49 ejb Exp $
  */
 
 #ifndef __CLIENTS_H_INCLUDED
@@ -85,22 +85,23 @@ struct Client
 
 struct LocalClient 
 {
-	char pass[PASSLEN + 1]; /* password they sent - this is unused after registration */
-	char exitreason[BUFSIZE];
-	char host[IPLEN + 1];
-	struct in_addr ip;  /* IP */
-	int fd;
-	int status;
-	int servertype;
-	unsigned long caps;
-
-	char bufsave[BUFSIZE];
-	int bufsavelen;
-	
-	char            sendq[SENDQ_SIZE];
-	int             s_top;
-	int             s_bottom;
-	int             s_size;
+  char pass[PASSLEN + 1]; /* password they sent - this is unused after registration */
+  char exitreason[BUFSIZE];
+  char host[IPLEN + 1];
+  struct in_addr ip;  /* IP */
+  int fd;
+  FILE *file;
+  int status;
+  int servertype;
+  unsigned long caps;
+  
+  char bufsave[BUFSIZE];
+  int bufsavelen;
+  
+  char            sendq[SENDQ_SIZE];
+  int             s_top;
+  int             s_bottom;
+  int             s_size;
 };
 
 typedef struct {

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_nick.c,v 1.5 2001/05/05 15:45:02 ejb Exp $
+ * $Id: m_nick.c,v 1.6 2001/05/06 18:05:52 ejb Exp $
  */
 
 
@@ -79,7 +79,6 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		   original nick */
 
 		send_out_nickchange(cptr, parv[0], nick, ts);
-		printf("NICK: %s -> %s [TS %ld]\n", parv[0], nick, ts);
 		strncpy(newclient->name, nick, sizeof(newclient->name) - 1);
 		newclient->user->ts = ts;
 		return 0;
@@ -115,10 +114,6 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		printf("%% IRC:ERR:Received NICK command from unsupported server type %d\n", cptr->localClient->servertype);
 		return 0;
 	}
-
-	/*	
-	printf("new nick: %s\n", nick);
-	*/
 
 	newclient = user_newslot(0);
 	strncpy(newclient->name, nick, NAMELEN);

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.6 2001/05/06 10:45:06 ejb Exp $
+ * $Id: commands.c,v 1.7 2001/05/06 18:05:52 ejb Exp $
  */
 
 
@@ -71,58 +71,75 @@ find_command(char *name)
 int
 handle_data(struct Client *cptr)
 {
-	char buffer[1024];
-	int i;
-	char line[BUFSIZE];
-	char *s;
-	char *b;
-	int bytes;
-	
-	i = recv(cptr->localClient->fd, buffer, BUFSIZE, 0);
-	if (i == -1) {
-		printf("%% NET:ERR:Read error from %s[%s]: %s\n", IsRegistered(cptr) ? cptr->name : "unknown", cptr->localClient->host, strerror(errno));
+  char line[BUFSIZE];
+  char *b, *next, *start;
+  int lbytes, tot;
+  int i;
+  
+  b = line;
+  lbytes = 0;
+
+  if (cptr->localClient->bufsavelen > 0)
+	{
+		strncpy(line, cptr->localClient->bufsave,
+		    cptr->localClient->bufsavelen);
+		b += cptr->localClient->bufsavelen;
+		lbytes = cptr->localClient->bufsavelen;
+		cptr->localClient->bufsavelen = 0;
+	}
+
+  tot = lbytes;
+  i = recv(cptr->localClient->fd, b, BUFSIZE - lbytes - 1, 0);
+  if (i == -1) 
+	{
+	  printf("%% NET:ERR:Read error from %s[%s]: %s\n", IsRegistered(cptr) ? cptr->name : "unknown", cptr->localClient->host, strerror(errno));
+	  cptr->localClient->fd = -1;
+	  exit_client(cptr, NULL, "Read error");
+	  return -1;
+	}
+  else if (i == 0)
+ 	 {
+		/* got disconnected */
 		cptr->localClient->fd = -1;
-		exit_client(cptr, NULL, "Read error");
+	  	exit_client(cptr, NULL, "Client disconnected");
 		return -1;
 	}
-	
-	b = buffer;
-	bytes = 0;
-	
-	for (;;) {
-		int lbytes = 0;
-		
-		s = line;
-		
-		if (cptr->localClient->bufsavelen) {
-			strncpy(line, cptr->localClient->bufsave, cptr->localClient->bufsavelen);
-			s += cptr->localClient->bufsavelen;
-			lbytes = cptr->localClient->bufsavelen;
-			cptr->localClient->bufsavelen = 0;
+  
+  tot += i;
+  *(line + tot) = '\0';
+  next = b = line;
+	  
+again:
+  b = next;
+  start = b;
+  lbytes = 0;
+  while (*b != '\0' && *b != '\r' && *b != '\n') {
+	  lbytes++;
+	  b++;
+  }
+
+  if (*b == '\0')
+	{
+	  /* so, save what we did get of that line into the client.. */
+		if (lbytes >= 512) {
+			printf("ERR: line too long\n");
+			return -1;
 		}
-		
-		while (bytes <= i && *b && *b != '\r') {
-			bytes++;
-			lbytes++;
-			*s++ = *b++;
-			if (bytes == i) { /* we reached the end of the buffer, and didn't see \r\n yet */
-				/* so, save what we did get of that line into the client.. */
-				strncpy(cptr->localClient->bufsave, line, lbytes);
-				cptr->localClient->bufsavelen = lbytes;
-				return 0;
-			}
-		}
-		
-		*s = *b = '\0';
-		s += 2; b += 2;
-		bytes += 2;
-		
-		printf("Read line: %s\n", line);
-		parse(cptr, line, s - 3);
-		if (bytes >= i)
-			break;
+		strncpy(cptr->localClient->bufsave, start, lbytes);
+		cptr->localClient->bufsavelen = lbytes;
+		return 0;
 	}
-	return 0;
+  next = b + 1;
+  if (*b == '\r')
+	  next++;
+  *b = '\0';
+  printf("Read line: %s\n", start);
+  parse(cptr, start);
+
+  if (*next != '\0')
+  	goto again;
+
+  return 0;
 }		
 	
 char* strtoken(char** save, char* str, char* fs)
@@ -241,7 +258,7 @@ do_numeric(char *numeric, struct Client *cptr, struct Client *from, int i, char 
   return 0;
 }
 
-int parse(struct Client *cptr, char *pbuffer, char *bufend)
+int parse(struct Client *cptr, char *pbuffer)
 {
   struct Client*  from = cptr;
   char*           ch;
@@ -337,8 +354,13 @@ int parse(struct Client *cptr, char *pbuffer, char *bufend)
           return -1;
     }
 
-  end = bufend - 1;
-  
+  end = s;
+  while (*end != '\0')
+	 end++;
+  end--;
+
+  printf("last char in string is %c\n", *end);
+
   i = 1;
   
   if (s)

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.5 2001/05/06 10:45:05 ejb Exp $
+ * $Id: clients.c,v 1.6 2001/05/06 18:05:52 ejb Exp $
  */
 
 
@@ -56,6 +56,7 @@ new_client(addr, fd)
 	memset(cptr->localClient, 0, sizeof(struct LocalClient));
 	
 	cptr->localClient->fd = fd;
+	cptr->localClient->file = fdopen(fd, "r+");
 	
 	memcpy(&cptr->localClient->ip, &addr.sin_addr, sizeof(cptr->localClient->ip));
 	strcpy(cptr->localClient->host, inet_ntoa(cptr->localClient->ip));
@@ -199,6 +200,9 @@ exit_client(cptr, from, reason)
 		sendto_serv_butone(from, ":%s QUIT :%s", cptr->name, reason);
 		dm = dlinkFind(&cptr_list, cptr);
 		dlinkDelete(dm, &cptr_list);
+		free(dm);
+		dm = dlinkFind(&client_cptr_list, cptr);
+		dlinkDelete(dm, &client_cptr_list);
 		free(dm);
 	  }
 	

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.h,v 1.2 2001/02/11 08:00:17 ejb Exp $
+ * $Id: commands.h,v 1.3 2001/05/06 18:05:49 ejb Exp $
  */
 
 #ifndef __COMANDS_H_INCLUDED
@@ -35,7 +35,7 @@ struct cmd
 };
 
 int handle_data(struct Client *);
-int parse(struct Client *, char *, char *);
+int parse(struct Client *, char *);
 
 
 #endif
