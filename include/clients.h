@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.h,v 1.7 2001/05/07 21:31:55 ejb Exp $
+ * $Id: clients.h,v 1.8 2001/05/16 02:13:37 ejb Exp $
  */
 
 #ifndef __CLIENTS_H_INCLUDED
@@ -55,6 +55,7 @@
 #define CAP_TS        0x00000001
 #define CAP_HALFOPS   0x00000002
 #define CAP_SJOIN     0x00000004
+#define CAP_P28       0x00000010
 
 #define IsRegistered(x) ((x)->localClient->status == STATUS_REGISTERED)
 #define IsLocal(x) ((x)->localClient)
@@ -63,8 +64,25 @@
 #define FLAGS_KILLED 0x000001
 #define FLAGS_AWAY   0x000002
 
-#define UMODE_INVISIBLE 0x00000001
-#define UMODE_OPER      0x00000002
+#define UMODE_INVISIBLE 0x00000001 /* ALL:           Invisible */
+#define UMODE_OPER      0x00000002 /* ALL:           IRC Operator */
+#define UMODE_SNOTICES  0x00000004 /* ALL:           Server notices */
+#define UMODE_WALLOPS   0x00000008 /* ALL:           See wallops */
+#define UMODE_SVSADM    0x00000010 /* UNREAL:        Services admin */
+#define UMODE_SERVADM   0x00000020 /* HYBRID/UNREAL: Server admin */
+#define UMODE_HELPOP    0x00000040 /* UNREAL:        Help operator */
+#define UMODE_SERVICES  0x00000080 /* UNREAL:        Client is a service */
+#define UMODE_NETADMIN  0x00000100 /* UNREAL:        Network Admin */
+#define UMODE_TECHADMIN 0x00000200 /* UNREAL:        Technical Administrator */
+#define UMODE_COADMIN   0x00000400 /* UNREAL:        Co-admin */
+#define UMODE_REGNICK   0x00000800 /* UNREAL:        Registered nick */
+#define UMODE_HIDE      0x00001000 /* UNREAL:        Hidden hostname */
+#define UMODE_WHOIS     0x00002000 /* UNREAL:        See /whois requests */
+#define UMODE_KIX       0x00004000 /* UNREAL:        "Only U: lines can kick you" */
+#define UMODE_HIDING    0x00008000 /* UNREAL:        Hides join/part on channels */
+#define UMODE_HIDEOPER  0x00010000 /* UNREAL:        Hide operator status */
+#define UMODE_SETHOST   0x00020000 /* UNREAL:        Using a /vhost */
+#define UMODE_SECURE    0x00040000 /* UNREAL:        SSL connection */
 
 struct User 
 {

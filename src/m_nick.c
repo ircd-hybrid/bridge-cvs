@@ -15,13 +15,14 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_nick.c,v 1.7 2001/05/07 16:36:51 ejb Exp $
+ * $Id: m_nick.c,v 1.8 2001/05/16 02:13:40 ejb Exp $
  */
 
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "clients.h"
 #include "handlers.h"
@@ -47,7 +48,10 @@
 */
 
 int
-m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
+m_nick(cptr, sptr, parc, parv)
+	 struct Client *cptr, *sptr;
+	 int parc;
+	 char **parv;
 {
 	char *nick = NULL;
 	long ts = 0;
@@ -59,8 +63,12 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	int hops = 0;
 	struct Client *newclient;
 	dlink_node *node;
+	int s28 = 0; /* if we are doing a 2.8-style nick */
+#if 0
+	struct Client *acptr;
+#endif
 
-	if (parc < 4) 
+	if (parc == 2) 
 	  {
 		/* nick change */
 		nick = parv[1];
@@ -71,6 +79,18 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		   change their nick, or parv[0] gets clobbered and we lose the
 		   original nick */
 
+#if 0
+		if (acptr == find_client(nick))
+		  {
+			if (strcmp(sptr->user->hostname, acptr->user->hostname) == 0 &&
+				strcmp(sptr->user->username, acptr->user->username) == 0)
+			  {
+			/* hm! nick already exists. so we process nick collide */
+			if (acptr->user->ts < ts) 
+			  {
+				/* new nick has higher TS (newer nick).
+				   so, what we do here depends. */
+#endif
 		send_out_nickchange(cptr, parv[0], nick, ts);
 		strncpy(sptr->name, nick, sizeof(sptr->name) - 1);
 		sptr->user->ts = ts;
@@ -91,6 +111,7 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		server = parv[7];
 		gecos = parv[8];
 		break;
+
 	  case PROTOCOL_UNREAL:
 		/* Unreal nick */
 		nick = parv[1];
@@ -102,6 +123,21 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		server = parv[6];
 		gecos = parv[7];
 		break;
+
+	  case PROTOCOL_28:
+		/* we handle 2.8-style NICKs differently.
+		   because 2.8 sends NICK first, then USER after,
+		   we don't have all the information we need here to establish a nick. */
+		nick = parv[1];
+		hops = atoi(parv[2]);
+		ts = time(NULL); /* XXX is this right? */
+		umode = "+";
+		username = "";
+		hostname = "";
+		server = "";
+		gecos = "";
+		s28 = 1;
+		break;
 	  default:
 		/* huh?? */
 		printf("%% IRC:ERR:Received NICK command from unsupported server type %d\n", cptr->localClient->servertype);
@@ -110,21 +146,32 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 
 	newclient = user_newslot(0);
 	strncpy(newclient->name, nick, NAMELEN);
-	strncpy(newclient->info, gecos, INFOLEN);
 	newclient->hopcount = hops;
 	newclient->type = TYPE_CLIENT;
-	newclient->from = find_client(server);
 	newclient->local = cptr;
 	newclient->user = malloc(sizeof(struct User));
-	strncpy(newclient->user->server, server, NAMELEN - 1);
-	strncpy(newclient->user->username, username, USERLEN - 1);
-	strncpy(newclient->user->hostname, hostname, HOSTLEN - 1);
+
+	if (!s28)
+	  {
+		/* do we want a NICK with a from of NULL?
+		   could cause problems. leave it for now */
+		newclient->from = find_client(server);
+
+		strncpy(newclient->info, gecos, INFOLEN);
+	
+		strncpy(newclient->user->server, server, NAMELEN - 1);
+		strncpy(newclient->user->username, username, USERLEN - 1);
+		strncpy(newclient->user->hostname, hostname, HOSTLEN - 1);
+	  }
+
 	newclient->user->umodes = 0;
 	newclient->user->ts = ts;
 	node = make_dlink_node();
 	dlinkAdd(newclient, node, &cptr_list);
 	node = make_dlink_node();
 	dlinkAdd(newclient, node, &client_cptr_list);
-	send_out_nick(cptr, parv[0], nick, hops, ts, 0, username, hostname, server, gecos);
+	/* can't do this yet with 2.8! */
+	if (!s28)
+	  send_out_nick(cptr, parv[0], nick, hops, ts, 0, username, hostname, server, gecos);
 	return 0;
 }

@@ -14,6 +14,11 @@
 #define MODE_TOPIC   0x00000040
 #define MODE_M       0x00000080
 
+#define MODE_OP      0x00000001
+#define MODE_VOICE   0x00000002
+#define MODE_HALFOP  0x00000004
+#define MODE_PEON    0x00000010
+
 struct Channel {
   char name[CHANLEN + 1];
   dlink_list ops;

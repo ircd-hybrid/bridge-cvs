@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.9 2001/05/07 21:31:58 ejb Exp $
+ * $Id: commands.c,v 1.10 2001/05/16 02:13:39 ejb Exp $
  */
 
 
@@ -46,7 +46,7 @@ struct cmd cmdtab[] = {
 	{"ping", MFLG_UNREG, m_ping},
 	{"nick", 0, m_nick},
 	{"version", 0, m_version},
-	{"quit", MFLG_UNREG, m_quit},
+	{"quit", 0, m_quit},
 	{"privmsg", 0, m_privmsg},
 	{"trace", 0, m_trace},
 	{"sjoin", 0, m_sjoin},
@@ -59,8 +59,9 @@ struct cmd cmdtab[] = {
 	{"kill", 0, m_kill},
 	{"away", 0, m_away},
 	{"mode", 0, m_mode},
-	{"capab", 0, m_capab},
+	{"capab", MFLG_UNREG, m_capab},
 	{"topic", 0, m_topic},
+	{"user", 0, m_user},
 	{NULL, 0, NULL},
 };
 
@@ -143,6 +144,7 @@ again:
   if (*b == '\r')
 	  next++;
   *b = '\0';
+
   printf("Read line: %s\n", start);
   parse(cptr, start);
 
@@ -185,18 +187,21 @@ static void
 string_to_array(char *string, char *end, int *parc, char *parv[MAX_ARG])
 {
   char *ap;
-  char *p = NULL;
-  
-  for(ap = strtoken(&p,string," "); ap; ap = strtoken(&p, NULL, " "))
+
+  for(ap = strtok(string, " "); 
+	  ap; 
+	  ap = strtok(NULL, " "))
+	{
 	  if(*ap != '\0')
 	  {
 		  parv[(*parc)] = ap;
 		  
-		  if (ap[0] == ':') {
+		  if (ap[0] == ':') 
+			{
 			  char *tendp = ap;
 			  
 			  while (*tendp++);
-			  
+
 			  if ( tendp < end ) /* more tokens to follow */
 				  ap [ strlen (ap) ] = ' ';
 			  
@@ -205,13 +210,14 @@ string_to_array(char *string, char *end, int *parc, char *parv[MAX_ARG])
 			  
 			  parv[(*parc)++] = ap;
 			  break;
-		  }
-		  
+			}
+
 		  if(*parc < MAX_ARG)
 			  ++(*parc);
 		  else
 			  break;
 	  }
+	}
   parv[(*parc)] = NULL;
 }
 
@@ -220,16 +226,9 @@ handle_command(struct cmd *mptr, struct Client *cptr, struct Client *from, int i
 {
   int (*f)(struct Client *, struct Client *, int, char **) = NULL;
 	
-  if (!IsRegistered(cptr))
-    {
-      /* if its from a possible server connection
-       * ignore it.. more than likely its a header thats sneaked through
-       */
-		
-      if(!(mptr->flags & MFLG_UNREG))
-		  return -1;
-    }
-	
+  if (!IsRegistered(cptr) && !(mptr->flags & MFLG_UNREG))
+	return -1;
+  
   f = mptr->f;
   	
   return (*f)(cptr, from, i, hpara);
@@ -372,7 +371,6 @@ int parse(struct Client *cptr, char *pbuffer)
 	  end = s;
 	  while (*end != '\0')
 		end++;
-	  end--;
 	  
 	  i = 1;
 	  

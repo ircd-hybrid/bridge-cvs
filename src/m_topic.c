@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_topic.c,v 1.1 2001/05/07 21:32:00 ejb Exp $
+ * $Id: m_topic.c,v 1.2 2001/05/16 02:13:40 ejb Exp $
  */
 
 #include <string.h>
@@ -38,8 +38,8 @@ m_topic(cptr, sptr, parc, parv)
 	 char **parv;
 {
   struct Channel *chan;
-  char *who, *channel, *newtopic;
-  long ts;
+  char *who = NULL, *channel = NULL, *newtopic = NULL;
+  long ts = 0;
   struct Client *acptr;
 
   if (parc < 3)

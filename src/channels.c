@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: channels.c,v 1.2 2001/05/07 16:36:50 ejb Exp $
+ * $Id: channels.c,v 1.3 2001/05/16 02:13:38 ejb Exp $
  */
 
 #include <string.h>
@@ -69,7 +69,7 @@ add_user_to_channel(user, channel, type)
 	 int type;
 {
   dlink_node *node;
-  dlink_list *list;
+  dlink_list *list = NULL;
 
   node = make_dlink_node();
   switch(type)

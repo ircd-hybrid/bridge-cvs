@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_server.c,v 1.6 2001/05/07 21:32:00 ejb Exp $
+ * $Id: m_server.c,v 1.7 2001/05/16 02:13:40 ejb Exp $
  */
 
 #include <stdio.h>
@@ -53,11 +53,15 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	if (find_client(parv[1])) 
 	  {
 		printf("%% IRC:ERR:Rejected server %s - already exists\n", parv[1]);
+		if (IsRegistered(cptr))
+		  sendto_serv_butone(NULL, ":%s WALLOPS :%s tried to re-introduce existing server %s (via %s)",
+							 ConfigFileEntry.myname, sptr->name, parv[1], cptr->name);
+
 		if (!IsRegistered(cptr))
 		  exit_client(cptr, NULL, "Server already exists");
 		return 0;
 	  }
-	
+
 	if (!IsRegistered(cptr)) /* local server introduction */
 	  {
 		if (!(conf = find_nconf(parv[1]))) 
@@ -78,6 +82,9 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		  {
 		  case PROTOCOL_UNREAL:
 			cptr->localClient->caps |= CAP_HALFOPS;
+			break;
+		  case PROTOCOL_28:
+			cptr->localClient->caps |= CAP_P28;
 			break;
 		  }
 

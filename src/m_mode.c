@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_mode.c,v 1.1 2001/05/07 21:31:59 ejb Exp $
+ * $Id: m_mode.c,v 1.2 2001/05/16 02:13:39 ejb Exp $
  */
 
 #include <string.h>
@@ -233,7 +233,7 @@ m_mode(cptr, sptr, parc, parv)
 				target->umodes |= UMODE_INVISIBLE;
 			  else
 				target->umodes &= ~UMODE_INVISIBLE;
-			  send_out_umode(cptr, sptr, sptr, WHICH(what), *p);
+			  send_out_umode(cptr, sptr, target, WHICH(what), UMODE_INVISIBLE);
 			  break;
 
 			case 'o': /* IRC operator; generic */
@@ -241,9 +241,86 @@ m_mode(cptr, sptr, parc, parv)
 				target->umodes |= UMODE_OPER;
 			  else
 				target->umodes &= ~UMODE_OPER;
-			  printf("user %s set mode %c%c\n", sptr->name, WHICH(what), *p);
-			  send_out_umode(cptr, sptr, sptr, WHICH(what), *p);
+			  send_out_umode(cptr, sptr, target, WHICH(what), UMODE_OPER);
+
 			  break;
+
+			case 's': /* Server notice; all but irc2.10 */
+			  if (what == MODE_ADD)
+				target->umodes |= UMODE_SNOTICES;
+			  else
+				target->umodes &= ~UMODE_SNOTICES;
+			  send_out_umode(cptr, sptr, target, WHICH(what), UMODE_SNOTICES);
+			  break;
+
+			case 'w': /* See wallops; generic */
+			  if (what == MODE_ADD)
+				target->umodes |= UMODE_WALLOPS;
+			  else
+				target->umodes &= ~UMODE_WALLOPS;
+			  send_out_umode(cptr, sptr, target, WHICH(what), UMODE_WALLOPS);
+			  break;
+
+			case 'a':
+			  {
+				int mode = 0;
+				
+				switch (cptr->localClient->servertype)
+				  {
+				  case PROTOCOL_TS3:
+					mode = UMODE_SERVADM;
+					break;
+				  case PROTOCOL_UNREAL:
+					mode = UMODE_SVSADM;
+					break;
+				  default:
+				  }
+
+				if (what == MODE_ADD)
+				  target->umodes |= mode;
+				else
+				  target->umodes &= ~mode;
+				send_out_umode(cptr, sptr, target, WHICH(what), mode);
+				break;
+			  }
+			case 'A':
+			  {
+				int mode = 0;
+
+				switch(cptr->localClient->servertype)
+				  {
+				  case PROTOCOL_UNREAL:
+					mode = UMODE_SERVADM;
+					break;
+				  default:
+				  }
+
+				if (what == MODE_ADD)
+				  target->umodes |= mode;
+				else
+				  target->umodes &= ~mode;
+				send_out_umode(cptr, sptr, target, WHICH(what), mode);
+				break;
+			  }
+			case 'h':
+			  {
+				int mode = 0;
+
+				switch(cptr->localClient->servertype)
+				  {
+				  case PROTOCOL_UNREAL:
+					mode = UMODE_HELPOP;
+					break;
+				  default:
+				  }
+
+				if (what == MODE_ADD)
+				  target->umodes |= mode;
+				else
+				  target->umodes &= ~mode;
+				send_out_umode(cptr, sptr, target, WHICH(what), mode);
+				break;
+			  }
 
 			default:
 			  /* lots more to do... ignore for now */

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.8 2001/05/07 21:31:58 ejb Exp $
+ * $Id: clients.c,v 1.9 2001/05/16 02:13:38 ejb Exp $
  */
 
 
@@ -37,7 +37,7 @@
 #include "main.h"
 #include "channel.h"
 
-static void send_chan_list(struct Client *, struct Channel *, dlink_list *, char *);
+static void send_chan_list(struct Client *, struct Channel *, dlink_list *, char *, int);
 
 dlink_list local_cptr_list;
 dlink_list serv_cptr_list;
@@ -127,17 +127,23 @@ read_loop(void)
                 
 	for(node = local_cptr_list.head; node; node = node->next) 
 	  {
+		int fd;
 		cptr = node->data;
-		
+
+		fd = cptr->localClient->fd;
+
 		/* go thru list of clients and
 		 * handle their commands if they have 
 		 * something to do.
 		 */
-		if(FD_ISSET(cptr->localClient->fd, &readfs) != 0) 
+		if(FD_ISSET(fd, &readfs) != 0) 
 		  {
 			handle_data(cptr);
-			cptr = local_cptr_list.head->data;
+			FD_CLR(fd, &readfs);
+			node = local_cptr_list.head;
 		  }
+		if (node == NULL)
+		  break;
 	  }
 	
 	/* If no users or none deleted, don't worry and return */
@@ -184,12 +190,17 @@ exit_client(cptr, from, reason)
 			free(dm);
 		  }
 		
-		dm = dlinkFind(&serv_cptr_list, cptr);
-		dlinkDelete(dm, &local_cptr_list);
-		free(dm);
-		dm = dlinkFind(&cptr_list, cptr);
-		dlinkDelete(dm, &cptr_list);
-		free(dm);
+		if ((dm = dlinkFind(&serv_cptr_list, cptr)) != NULL)
+		  {
+			dlinkDelete(dm, &serv_cptr_list);
+			free(dm);
+		  }
+
+		if ((dm = dlinkFind(&cptr_list, cptr)) != NULL)
+		  {
+			dlinkDelete(dm, &cptr_list);
+			free(dm);
+		  }
 
 		/* send an SQUIT for it */
 		sendto_serv_butone(from, "SQUIT %s", cptr->name);
@@ -282,6 +293,10 @@ send_myinfo(cptr)
 		sendto_one(cptr, "SERVER %s %d :%s", ConfigFileEntry.myname, 1, ConfigFileEntry.myinfo);
 		sendto_one(cptr, "SVINFO 3 3 0 :%d", CurrentTime);
 		break;
+	  case PROTOCOL_28:
+		sendto_one(cptr, "PASS %s", conf->pass);
+		sendto_one(cptr, "SERVER %s %d :%s", ConfigFileEntry.myname, 1, ConfigFileEntry.myinfo);
+		break;
 	  default:
 		printf("%% SRV:ERR:send_myinfo called for unknown server type!\n");
 		break;
@@ -301,6 +316,26 @@ user_mode_to_string(to, cptr)
 	*p++ = 'o';
   if (cptr->umodes & UMODE_INVISIBLE)
 	*p++ = 'i';
+  if (cptr->umodes & UMODE_SERVADM)
+	switch(to->localClient->servertype)
+	  {
+	  case PROTOCOL_TS3:
+		*p++ = 'a';
+		break;
+	  case PROTOCOL_UNREAL:
+		*p++ = 'A';
+		break;
+	  }
+  if (cptr->umodes & UMODE_SVSADM)
+	switch(to->localClient->servertype)
+	  {
+	  case PROTOCOL_TS3:
+		/* no way to express this using TS3 */
+		break;
+	  case PROTOCOL_UNREAL:
+		*p++ = 'a';
+		break;
+	  }
 
   return modes;
 }
@@ -341,6 +376,7 @@ send_netburst(cptr)
 							   acptr->name, acptr->hopcount, acptr->info);
 					break;
 				  case PROTOCOL_TS3:
+				  case PROTOCOL_28:
 					sendto_one(cptr, ":%s SERVER %s %d :%s", 
 							   acptr->from ? acptr->from->name : ConfigFileEntry.myname, 
 							   acptr->name, acptr->hopcount, acptr->info);
@@ -373,6 +409,16 @@ send_netburst(cptr)
 					   acptr->name, acptr->hopcount + 1, acptr->user->ts, user_mode_to_string(cptr, acptr),
 					   acptr->user->username, acptr->user->hostname, acptr->from->name, acptr->info);
 			break;
+		  case PROTOCOL_28:
+			/* stupid. */
+			sendto_one(cptr, "NICK %s :%d",
+					   acptr->name, acptr->hopcount + 1);
+			sendto_one(cptr, ":%s USER %s %s %s :%s",
+					   acptr->name, acptr->user->username, acptr->user->hostname,
+					   acptr->from->name, acptr->info);
+			sendto_one(cptr, ":%s MODE %s :+%s",
+					   acptr->name, acptr->name, user_mode_to_string(cptr, acptr));
+			break;
 		  default:
 			printf("Unsupported protocol for NICK in send_netburst\n");
 			break;
@@ -393,20 +439,62 @@ send_netburst(cptr)
 	  for (node = channels.head; node; node = node->next)
 		{
 		  chan = node->data;
-		  send_chan_list(cptr, chan, &chan->ops, "@");
-		  send_chan_list(cptr, chan, &chan->halfops, "%");
-		  send_chan_list(cptr, chan, &chan->voices, "+");
-		  send_chan_list(cptr, chan, &chan->peons, "");
+		  send_chan_list(cptr, chan, &chan->ops, "@", MODE_OP);
+		  send_chan_list(cptr, chan, &chan->halfops, "%", MODE_HALFOP);
+		  send_chan_list(cptr, chan, &chan->voices, "+", MODE_VOICE);
+		  send_chan_list(cptr, chan, &chan->peons, "", MODE_PEON);
 		}
+	}
+
+	/* Unreal needs this */
+	sendto_one(cptr, "NETINFO 0 %ld 2302 0 0 0 0 :Hybridnet", time(NULL));
+}
+
+void
+send_chan_list_28(cptr, chan, list, type)
+	 struct Client *cptr;
+	 struct Channel *chan;
+	 dlink_list *list;
+	 int type;
+{
+  dlink_node *node;
+  struct Client *acptr;
+  char mode = '\0';
+
+  for (node = list->head; node; node = node->next)
+	{
+	  acptr = node->data;
+
+	  sendto_one(cptr, ":%s JOIN %s",
+				 acptr->name, chan->name);
+	  
+	  switch(type)
+		{
+		case MODE_OP:
+		  mode = 'o';
+		  break;
+		case MODE_VOICE:
+		  mode = 'v';
+		  break;
+		case MODE_HALFOP:
+		  mode = 'h';
+		  break;
+		}
+
+	  if (mode != '\0')
+		sendto_one(cptr, ":%s MODE %s +%c %s",
+				   ConfigFileEntry.myname, chan->name,
+				   mode, acptr->name);
 	}
 }
 
 void
-send_chan_list(cptr, chan, list, symbol)
+send_chan_list(cptr, chan, list, symbol, type)
 	 struct Client *cptr;
 	 struct Channel *chan;
 	 dlink_list *list;
 	 char *symbol;
+	 int type;
 {
   dlink_node *node;
   char nickbuf[BUFSIZE];
@@ -415,6 +503,16 @@ send_chan_list(cptr, chan, list, symbol)
   char *mb = modebuf;
   char *n = nickbuf;
   struct Client *client;
+
+  switch(cptr->localClient->servertype)
+	{
+	case PROTOCOL_28:
+	  /* special processing for this, it doesn't use SJOIN. */
+	  send_chan_list_28(cptr, chan, list, type);
+	  return;
+	default:
+	  break;
+	}
 
   *mb++ = '+';
 

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: protocol.c,v 1.5 2001/05/07 21:32:00 ejb Exp $
+ * $Id: protocol.c,v 1.6 2001/05/16 02:13:41 ejb Exp $
  */
 
 #include "clients.h"
@@ -43,6 +43,7 @@ send_out_server(sptr, source, name, hopcount, info)
 	  switch(acptr->localClient->servertype) 
 		{
 		case PROTOCOL_TS3:
+		case PROTOCOL_28:
 		  sendto_one(acptr, ":%s SERVER %s %d :%s", source, name, hopcount, info);
 		  break;
 		case PROTOCOL_UNREAL:
@@ -82,6 +83,12 @@ send_out_nick(from, prefix, nick, hops, ts, umodes, user, host, server, name)
 		  sendto_one(acptr, "NICK %s %d %ld %s %s %s 0 :%s",
                      nick, hops, ts, user, host, server, name);
 		  /* Unreal also needs to send the MODEs and SETHOST here.. */
+		  break;
+		case PROTOCOL_28:
+		  sendto_one(acptr, "NICK %s :%d",
+					 nick, hops);
+		  sendto_one(acptr, ":%s USER %s %s %s :%s",
+					 nick, user, host, server, name);
 		  break;
 		default:
 		  printf("Unsupported protocol %d for send_out_nick\n", acptr->localClient->servertype);
@@ -165,6 +172,9 @@ send_out_topic(cptr, chan, who, ts, newtopic)
 	{
 	  acptr = node->data;
 
+	  if (acptr == cptr)
+		continue;
+
 	  switch (acptr->localClient->servertype)
 		{
 		case PROTOCOL_UNREAL:
@@ -183,7 +193,8 @@ send_out_topic(cptr, chan, who, ts, newtopic)
 void
 send_out_umode(from, who, target, which, mode)
 	 struct Client *from, *who, *target;
-	 char which, mode;
+	 char which;
+	 int mode;
 {
   dlink_node *node;
   struct Client *acptr;
@@ -195,13 +206,38 @@ send_out_umode(from, who, target, which, mode)
 	  if (acptr == from)
 		continue;
 
-	  switch(acptr->localClient->servertype)
+	  switch(mode)
 		{
-		case PROTOCOL_UNREAL:
-		case PROTOCOL_TS3:
-		  sendto_one(acptr, ":%s MODE %s :%c%c",
-					 who->name, target->name, which, mode);
+		case UMODE_WALLOPS:
+		  sendto_one(acptr, ":%s MODE %s :%cw",
+					 who->name, target->name, which);
+		  break;
+		case UMODE_SNOTICES:
+		  sendto_one(acptr, ":%s MODE %s :%cs",
+					 who->name, target->name, which);
+		  break;
+		case UMODE_INVISIBLE:
+		  sendto_one(acptr, ":%s MODE %s :%cs",
+					 who->name, target->name, which);
+		  break;
+		case UMODE_OPER:
+		  sendto_one(acptr, ":%s MODE %s :%co",
+					 who->name, target->name, which);
+		  break;
+		case UMODE_SERVADM:
+		  switch(acptr->localClient->servertype)
+			{
+			case PROTOCOL_UNREAL:
+			  sendto_one(acptr, ":%s MODE %s :%cA",
+						 who->name, target->name, which);
+			  break;
+			case PROTOCOL_TS3:
+			  sendto_one(acptr, ":%s MODE %s :%ca",
+						 who->name, target->name, which);
+			  break;
+			}
 		default:
+		  break;
 		}
 	}
 }

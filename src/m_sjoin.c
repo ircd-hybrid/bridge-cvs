@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_sjoin.c,v 1.2 2001/05/06 10:45:06 ejb Exp $
+ * $Id: m_sjoin.c,v 1.3 2001/05/16 02:13:40 ejb Exp $
  */
 
 #include <string.h>
@@ -137,7 +137,8 @@ m_sjoin(cptr, sptr, parc, parv)
 	{
 	  /* split nickbuf into each nick, and add it */
 	  int type = T_PEON;
-	  
+	  char mode = '\0';
+
 	  switch (nick[0]) /* op/voice/halfop.. */
 		{
 		case '@':
@@ -160,6 +161,26 @@ m_sjoin(cptr, sptr, parc, parv)
 				   ConfigFileEntry.myname, nick, parv[0]);
 	  else
 		add_user_to_channel(acptr, channel, type);
+
+	  /* we now have to send to 2.8-style servers here.
+		 this is really not a nice way to do things; the
+		 2.8 protocol sucks. */
+	  sendto_cap_serv_butone(NULL, CAP_P28, ":%s JOIN %s",
+							 acptr->name, channel->name);
+	  switch(type)
+		{
+		case T_OP:
+		  mode = 'o';
+		  break;
+		case T_VOICE:
+		  mode = 'v';
+		default:
+		  break;
+		}
+	  if (mode != '\0')
+		sendto_cap_serv_butone(NULL, CAP_P28, ":%s MODE %s +%c %s",
+							   ConfigFileEntry.myname, channel->name,
+							   mode, acptr->name);
 	}
 
   /* finally, send everything to other servers.

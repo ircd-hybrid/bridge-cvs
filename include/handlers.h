@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.8 2001/05/07 21:31:55 ejb Exp $
+ * $Id: handlers.h,v 1.9 2001/05/16 02:13:37 ejb Exp $
  */
 
 #ifndef __HANDLERS_H_INCLUDED
@@ -42,5 +42,6 @@ int m_away(struct Client *, struct Client *, int, char **);
 int m_mode(struct Client *, struct Client *, int, char **);
 int m_capab(struct Client *, struct Client *, int, char **);
 int m_topic(struct Client *, struct Client *, int, char **);
+int m_user(struct Client *, struct Client *, int, char **);
 
 #endif
