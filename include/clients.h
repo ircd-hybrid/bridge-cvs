@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.h,v 1.3 2001/05/05 12:53:24 ejb Exp $
+ * $Id: clients.h,v 1.4 2001/05/05 15:44:59 ejb Exp $
  */
 
 #ifndef __CLIENTS_H_INCLUDED
@@ -63,6 +63,7 @@ struct User
 {
   char username [USERLEN + 1];
   char hostname [HOSTLEN + 1];
+  char server [NAMELEN + 1];
   int umodes;
   long ts;
 };
@@ -112,6 +113,7 @@ extern count_t Count;
 extern dlink_list serv_cptr_list;
 extern dlink_list local_cptr_list;
 extern dlink_list cptr_list;
+extern dlink_list client_cptr_list;
 
 void new_client(struct sockaddr_in, int);
 struct Client *user_newslot(int);

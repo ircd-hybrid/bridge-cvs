@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_nick.c,v 1.4 2001/05/05 12:53:27 ejb Exp $
+ * $Id: m_nick.c,v 1.5 2001/05/05 15:45:02 ejb Exp $
  */
 
 
@@ -78,7 +78,7 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 		   change their nick, or parv[0] gets clobbered and we lose the
 		   original nick */
 
-		send_out_nickchange(parv[0], nick, ts);
+		send_out_nickchange(cptr, parv[0], nick, ts);
 		printf("NICK: %s -> %s [TS %ld]\n", parv[0], nick, ts);
 		strncpy(newclient->name, nick, sizeof(newclient->name) - 1);
 		newclient->user->ts = ts;
@@ -88,21 +88,32 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	/* else its a new nick being introduced */
 	switch (cptr->localClient->servertype) 
 	  {
-		case PROTOCOL_TS3:
-			/* TS3 nick introduction .. */
-			nick = parv[1];
-			hops = atoi(parv[2]);
-			ts = atol(parv[3]);
-			umode = parv[4];
-			username = parv[5];
-			hostname = parv[6];
-			server = parv[7];
-			gecos = parv[8];
-			break;
-		default:
-			/* huh?? */
-			printf("%% IRC:ERR:Received NICK command from unsupported server type %d\n", cptr->localClient->servertype);
-			return 0;
+	  case PROTOCOL_TS3:
+		/* TS3 nick introduction .. */
+		nick = parv[1];
+		hops = atoi(parv[2]);
+		ts = atol(parv[3]);
+		umode = parv[4];
+		username = parv[5];
+		hostname = parv[6];
+		server = parv[7];
+		gecos = parv[8];
+		break;
+	  case PROTOCOL_UNREAL:
+		/* Unreal nick */
+		nick = parv[1];
+		hops = atoi(parv[2]);
+		ts = atol(parv[3]);
+		umode = "+";
+		username = parv[4];
+		hostname = parv[5];
+		server = parv[6];
+		gecos = parv[8];
+		break;
+	  default:
+		/* huh?? */
+		printf("%% IRC:ERR:Received NICK command from unsupported server type %d\n", cptr->localClient->servertype);
+		return 0;
 	}
 
 	/*	
@@ -114,15 +125,18 @@ m_nick(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	strncpy(newclient->info, gecos, INFOLEN);
 	newclient->hopcount = hops;
 	newclient->type = TYPE_CLIENT;
-	newclient->from = sptr;
+	newclient->from = find_client(server);
 	newclient->local = cptr;
 	newclient->user = malloc(sizeof(struct User));
-	strncpy(newclient->user->username, username, USERLEN);
-	strncpy(newclient->user->hostname, hostname, HOSTLEN);
+	strncpy(newclient->user->server, server, NAMELEN - 1);
+	strncpy(newclient->user->username, username, USERLEN - 1);
+	strncpy(newclient->user->hostname, hostname, HOSTLEN - 1);
 	newclient->user->umodes = 0;
 	newclient->user->ts = ts;
 	node = make_dlink_node();
 	dlinkAdd(newclient, node, &cptr_list);
-	
+	node = make_dlink_node();
+	dlinkAdd(newclient, node, &client_cptr_list);
+	send_out_nick(cptr, parv[0], nick, hops, ts, 0, username, hostname, server, gecos);
 	return 0;
 }

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: m_server.c,v 1.3 2001/05/05 12:53:27 ejb Exp $
+ * $Id: m_server.c,v 1.4 2001/05/05 15:45:03 ejb Exp $
  */
 
 #include <stdio.h>
@@ -44,23 +44,27 @@ m_server(struct Client *cptr, struct Client *sptr, int parc, char **parv)
 	struct nConf *conf;
 	dlink_node *node;
 	
-	if (parc < 4) {
+	if (parc < 4) 
+	  {
 		printf("%% IRC:ERR:Not enough parameters for SERVER from %s\n", sptr->name);
 		return 0;
-	}
+	  }
 	
-	if (find_client(parv[1])) {
-	  printf("%% IRC:ERR:Rejected server %s - already exists\n", parv[1]);
-	  exit_client(cptr, NULL, "Server already exists");
-	  return 0;
-	}
+	if (find_client(parv[1])) 
+	  {
+		printf("%% IRC:ERR:Rejected server %s - already exists\n", parv[1]);
+		if (!IsRegistered(cptr))
+		  exit_client(cptr, NULL, "Server already exists");
+		return 0;
+	  }
 	
 	if (!IsRegistered(cptr)) /* local server introduction */
-	{
-		if (!(conf = find_nconf(parv[1]))) {
+	  {
+		if (!(conf = find_nconf(parv[1]))) 
+		  {
 			exit_client(cptr, NULL, "No N Line");
 			return 0;
-		}
+		  }
 
 		Count.servers++;
 		cptr->hopcount = atoi(parv[2]);

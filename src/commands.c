@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: commands.c,v 1.4 2001/05/05 12:53:26 ejb Exp $
+ * $Id: commands.c,v 1.5 2001/05/05 15:45:02 ejb Exp $
  */
 
 
@@ -35,6 +35,7 @@
 #include "tools.h"
 #include "handlers.h"
 #include "setup.h"
+#include "config.h"
 
 #define CLIENT_EXITED -2
 
@@ -46,6 +47,7 @@ struct cmd cmdtab[] = {
 	{"nick", 0, m_nick},
 	{"version", 0, m_version},
 	{"quit", MFLG_UNREG, m_quit},
+	{"privmsg", 0, m_privmsg},
 	{NULL, 0, NULL},
 };
 
@@ -80,6 +82,7 @@ handle_data(struct Client *cptr)
 		exit_client(cptr, NULL, "Read error");
 		return -1;
 	}
+	
 	b = buffer;
 	bytes = 0;
 	
@@ -205,7 +208,34 @@ handle_command(struct cmd *mptr, struct Client *cptr, struct Client *from, int i
 int
 do_numeric(char *numeric, struct Client *cptr, struct Client *from, int i, char **para)
 {
-	return 0;
+  struct Client *target;
+  char buffer[BUFSIZE * 2];
+  int j;
+
+  if ((target = find_client(para[1])) == NULL)
+	{
+	  sendto_serv_butone(NULL, ":%s WALLOPS :Numeric from %s to non-existant client %s", 
+						 ConfigFileEntry.myname, para[0], para[1]);
+	  return 0;
+	}
+
+  if (numeric[0] == '0')
+	numeric[0] = '1';
+
+  buffer[0] = '\0';
+
+  /* :a <123> b a b :c */
+  for (j = 1; j < i - 1; j++)
+	{
+	  strcat(buffer, " ");
+	  strcat(buffer, para[j]);
+	}
+  
+  strcat(buffer, " :");
+  strcat(buffer, para[i - 1]);
+
+  sendto_one(target, ":%s %s%s", para[0], numeric, buffer);
+  return 0;
 }
 
 int parse(struct Client *cptr, char *pbuffer, char *bufend)
@@ -255,6 +285,8 @@ int parse(struct Client *cptr, char *pbuffer, char *bufend)
           if (!from) 
 			{
 			  printf("%% IRC:ERR:Client %s is unknown!\n", sender);
+			  sendto_serv_butone(NULL, ":%s WALLOPS :Unknown prefix %s from %s\n", ConfigFileEntry.myname,
+								 sender, cptr->name);
 			  /* unknown prefix, client should be removed */
 			  return -1;
 			}

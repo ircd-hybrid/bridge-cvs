@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: config.h,v 1.2 2001/02/11 08:00:17 ejb Exp $
+ * $Id: config.h,v 1.3 2001/05/05 15:45:00 ejb Exp $
  */
 
 #ifndef __CONFIG_H_INCLUDED
@@ -24,7 +24,7 @@
 #include "clients.h"
 
 #define PROTOCOL_TS3 0
-#define PROTOCOL_P8 1
+#define PROTOCOL_UNREAL 1
 #define PROTOCOL_28 2
 
 struct ConfigFileEntryT 

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: bridge.c,v 1.3 2001/05/05 12:53:26 ejb Exp $
+ * $Id: bridge.c,v 1.4 2001/05/05 15:45:01 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -57,6 +57,7 @@ main(int argc, char **argv)
 	memset(&serv_cptr_list, 0, sizeof(serv_cptr_list));
 	memset(&cptr_list, 0, sizeof(cptr_list));
 	memset(&Count, 0, sizeof(Count));
+	memset(&client_cptr_list, 0, sizeof(client_cptr_list));
 
 	printf("%% Loading configuration...\n");
 	parse_config();

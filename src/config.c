@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: config.c,v 1.3 2001/05/05 12:53:27 ejb Exp $
+ * $Id: config.c,v 1.4 2001/05/05 15:45:02 ejb Exp $
  */
 
 
@@ -42,10 +42,10 @@ new_nconf(char *server, char *password, char *protocol)
 	newconf = malloc(sizeof(struct nConf));
 	strcpy(newconf->server, server);
 	strcpy(newconf->pass, password);
-	if (!strcmp(protocol, "TS3"))
+	if (!strcasecmp(protocol, "TS3"))
 		newconf->protocol = PROTOCOL_TS3;
-	else if (!strcmp(protocol, "P8"))
-		newconf->protocol = PROTOCOL_P8;
+	else if (!strcasecmp(protocol, "Unreal"))
+		newconf->protocol = PROTOCOL_UNREAL;
 	else if (!strcmp(protocol, "2.8"))
 		newconf->protocol = PROTOCOL_28;
 	else {

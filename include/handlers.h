@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: handlers.h,v 1.4 2001/05/05 12:53:25 ejb Exp $
+ * $Id: handlers.h,v 1.5 2001/05/05 15:45:00 ejb Exp $
  */
 
 #ifndef __HANDLERS_H_INCLUDED
@@ -28,5 +28,6 @@ int m_ping(struct Client *, struct Client *, int, char **);
 int m_nick(struct Client *, struct Client *, int, char **);
 int m_version(struct Client *, struct Client *, int, char **);
 int m_quit(struct Client *, struct Client *, int, char **);
+int m_privmsg(struct Client *, struct Client *, int, char **);
 
 #endif

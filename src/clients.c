@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.3 2001/05/05 12:53:26 ejb Exp $
+ * $Id: clients.c,v 1.4 2001/05/05 15:45:01 ejb Exp $
  */
 
 
@@ -39,6 +39,7 @@
 dlink_list local_cptr_list;
 dlink_list serv_cptr_list;
 dlink_list cptr_list;
+dlink_list client_cptr_list;
 
 void
 new_client(struct sockaddr_in addr, int fd)
@@ -113,22 +114,18 @@ read_loop(void)
 			break;
 	}
                 
-	cptr = local_cptr_list.head->data;
+	for(node = local_cptr_list.head; node; node = node->next) {
+	  cptr = node->data;
 
-	for(;;) {
 		/* go thru list of clients and
 		 * handle their commands if they have 
 		 * something to do.
 		 */
-		if(FD_ISSET(cptr->localClient->fd, &readfs) != 0) {
-			handle_data(cptr);
+	  if(FD_ISSET(cptr->localClient->fd, &readfs) != 0) 
+		{
+		  handle_data(cptr);
+		  cptr = local_cptr_list.head->data;
 		}
-		
-		/* make sure we still have some clients .. */
-		if(cptr && cptr->next)
-			cptr = cptr->next;
-		else
-			break;
 	}
 	                
 	/* If no users or none deleted, don't worry and return */
@@ -242,7 +239,7 @@ send_myinfo(struct Client *cptr)
 	conf = find_nconf(cptr->name);
 	
 	switch (cptr->localClient->servertype) {
-		case PROTOCOL_P8:
+		case PROTOCOL_UNREAL:
 			sendto_one(cptr, "PASS :%s", conf->pass);
 			sendto_one(cptr, "SERVER %s %d :%s", ConfigFileEntry.myname, 1, ConfigFileEntry.myinfo);
 			sendto_one(cptr, "PROTOCTL SJOIN");
@@ -286,7 +283,7 @@ send_netburst(struct Client *cptr)
 				did_this_round++;
 				switch (cptr->localClient->servertype) 
 				  {
-				  case PROTOCOL_P8:
+				  case PROTOCOL_UNREAL:
 					/* XXX send '0', we don't support server numerics right now */
 					sendto_one(cptr, ":%s SERVER %s %d 0 :%s", acptr->from ? acptr->from->name : ConfigFileEntry.myname, acptr->name, acptr->hopcount, acptr->info);
 					break;
@@ -299,6 +296,29 @@ send_netburst(struct Client *cptr)
 				  }
 				doneservs++;
 			  }
+		  }
+	  }
+
+	/* now we send users */
+	for (node = client_cptr_list.head; node; node = node->next)
+	  {
+		acptr = node->data;
+
+		switch (cptr->localClient->servertype)
+		  {
+		  case PROTOCOL_UNREAL:
+			sendto_one(cptr, "NICK %s %d %ld %s %s %s 0 :%s",
+                       acptr->name, acptr->hopcount + 1, acptr->user->ts, acptr->user->username,
+					   acptr->user->hostname, acptr->from->name, acptr->info);
+			break;
+		  case PROTOCOL_TS3:
+			sendto_one(cptr, "NICK %s %d %ld + %s %s %s :%s",
+					   acptr->name, acptr->hopcount + 1, acptr->user->ts, acptr->user->username,
+					   acptr->user->hostname, acptr->from->name, acptr->info);
+			break;
+		  default:
+			printf("Unsupported protocol for NICK in send_netburst\n");
+			break;
 		  }
 	  }
 }

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: send.c,v 1.4 2001/05/05 12:53:28 ejb Exp $
+ * $Id: send.c,v 1.5 2001/05/05 15:45:04 ejb Exp $
  */
 
 #include <sys/types.h>
@@ -110,9 +110,7 @@ sendto_one(struct Client *cptr, char *fmt, ...)
 	char *c;
 	int len;
 
-	printf("sending to %s\n", cptr->name);
 	if (!IsLocal(cptr)) {
-	  printf("%s is not local; actually sending to %s\n", cptr->name, cptr->local->name);
 	  cptr = cptr->local;
 	}
 	

@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: protocol.c,v 1.1 2001/05/05 12:53:28 ejb Exp $
+ * $Id: protocol.c,v 1.2 2001/05/05 15:45:03 ejb Exp $
  */
 
 #include "clients.h"
@@ -44,7 +44,7 @@ send_out_server(sptr, source, name, hopcount, info)
 		case PROTOCOL_TS3:
 		  sendto_one(acptr, ":%s SERVER %s %d :%s", source, name, hopcount, info);
 		  break;
-		case PROTOCOL_P8:
+		case PROTOCOL_UNREAL:
 		  sendto_one(acptr, ":%s SERVER %s %d 0 :%s", source, name, hopcount, info);
 		  break;
 		default:
@@ -54,10 +54,47 @@ send_out_server(sptr, source, name, hopcount, info)
 	}
 }
   
+
 void
-send_out_nickchange(oldnick, newnick, ts)
-	 char *oldnick, *newnick;
+send_out_nick(from, prefix, nick, hops, ts, umodes, user, host, server, name)
+	 struct Client *from;
+	 char *prefix, *nick, *user, *host, *server, *name;
+	 int hops, umodes;
 	 long ts;
+{
+  struct Client *acptr;
+  dlink_node *node;
+
+  for (node = local_cptr_list.head; node; node = node->next)
+	{
+	  acptr = node->data;
+
+	  if (acptr == from)
+		continue;
+
+	  switch(acptr->localClient->servertype)
+		{
+		case PROTOCOL_TS3:
+		  sendto_one(acptr, "NICK %s %d %ld + %s %s %s :%s",
+					 nick, hops, ts, user, host, server, name);
+		  break;
+		case PROTOCOL_UNREAL:
+		  sendto_one(acptr, "NICK %s %d %ld %s %s %s 0 :%s",
+                     nick, hops, ts, user, host, server, name);
+		  /* Unreal also needs to send the MODEs and SETHOST here.. */
+		  break;
+		default:
+		  printf("Unsupported protocol %d for send_out_nick\n", acptr->localClient->servertype);
+		  break;
+		}
+	}
+}
+			
+void
+send_out_nickchange(from, oldnick, newnick, ts)
+			 struct Client *from;
+			 char *oldnick, *newnick;
+			 long ts;
 {
   struct Client *acptr;
   dlink_node *node;
@@ -66,10 +103,13 @@ send_out_nickchange(oldnick, newnick, ts)
 	{
 	  acptr = node->data;
 
+	  if (from == acptr)
+		continue;
+
 	  switch(acptr->localClient->servertype) 
 		{
 		case PROTOCOL_TS3:
-		case PROTOCOL_P8:
+		case PROTOCOL_UNREAL:
 		  sendto_one(acptr, ":%s NICK %s %ld", oldnick, newnick, ts);
 		  break;
 		default:
