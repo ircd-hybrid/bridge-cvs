@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: clients.c,v 1.9 2001/05/16 02:13:38 ejb Exp $
+ * $Id: clients.c,v 1.10 2002/03/11 14:53:16 ejb Exp $
  */
 
 
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 
 #include "clients.h"
 #include "commands.h"
