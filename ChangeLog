@@ -1,0 +1,17 @@
+*** 20010111_4 by ejb
+- changed startup message
+- added version
+
+
+*** 20010111_3 by ejb
+- put things into seperate subdirs
+
+
+*** 20010111_2 by ejb
+Directory /cvsroot/bridge/src added to the repository
+
+
+*** 20010111_1 by lusky
+- Added empty license file, do we want GPL v1 or v2?
+
+
